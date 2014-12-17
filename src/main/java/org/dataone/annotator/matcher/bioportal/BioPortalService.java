@@ -22,7 +22,7 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 public class BioPortalService implements ConceptMatcher {
 	
-	private static Log logMetacat = LogFactory.getLog(BioPortalService.class);
+	private static Log log = LogFactory.getLog(BioPortalService.class);
 	
     // for looking up concepts in BioPortal
     private static final String REST_URL = "http://data.bioontology.org";
@@ -73,7 +73,7 @@ public class BioPortalService implements ConceptMatcher {
 			if (classNodeList != null && classNodeList.getLength() > 0) {
 				for (int i = 0; i < classNodeList.getLength(); i++) {
 					String classURI = classNodeList.item(i).getFirstChild().getNodeValue();
-					logMetacat.info("annotator suggested: " + classURI);
+					log.info("annotator suggested: " + classURI);
 
 					
 					if (superClass == null) {
@@ -86,7 +86,7 @@ public class BioPortalService implements ConceptMatcher {
 						try {
 							isSubclass = superClass.hasSubClass(subclass);
 						} catch (ConversionException ce) {
-							logMetacat.warn("Skipping unknown subclass: " + classURI, ce);
+							log.warn("Skipping unknown subclass: " + classURI, ce);
 							// try the next one
 							continue;
 						}
@@ -100,7 +100,7 @@ public class BioPortalService implements ConceptMatcher {
 				
 			}
 		} catch (Exception e) {
-			logMetacat.error("Could not lookup BioPortal annotation for text=" + text, e);
+			log.error("Could not lookup BioPortal annotation for text=" + text, e);
 		}
 		
 		return results;

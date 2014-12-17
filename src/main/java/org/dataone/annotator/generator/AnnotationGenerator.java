@@ -5,10 +5,10 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.annotator.matcher.ConceptMatcher;
 import org.dataone.annotator.matcher.ConceptMatcherFactory;
-import org.dataone.annotator.matcher.orcid.OrcidService;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.service.types.v1.Identifier;
@@ -33,7 +33,7 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 public class AnnotationGenerator {
 
-	private static Logger logMetacat = Logger.getLogger(AnnotationGenerator.class);
+	private static Log log = LogFactory.getLog(AnnotationGenerator.class);
 	
 	public static String rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
 	public static String rdfs = "http://www.w3.org/2000/01/rdf-schema#";
@@ -197,7 +197,7 @@ public class AnnotationGenerator {
 					o1.addOntClass(avfr);
 				}
 				
-				logMetacat.debug("Entity name: " + entityName);
+				log.debug("Entity name: " + entityName);
 				Attribute[] attributes = entity.getAttributeList().getAttributes();
 				int attributeCount = 1;
 				if (attributes != null) {
@@ -215,14 +215,14 @@ public class AnnotationGenerator {
 						String attributeUnit = attribute.getUnit();
 						String attributeDomain = attribute.getDomain().getClass().getSimpleName();
 		
-						logMetacat.debug("Attribute name: " + attributeName);
-						logMetacat.debug("Attribute label: " + attributeLabel);
-						logMetacat.debug("Attribute definition: " + attributeDefinition);
-						logMetacat.debug("Attribute type: " + attributeType);
-						logMetacat.debug("Attribute scale: " + attributeScale);
-						logMetacat.debug("Attribute unit type: " + attributeUnitType);
-						logMetacat.debug("Attribute unit: " + attributeUnit);
-						logMetacat.debug("Attribute domain: " + attributeDomain);
+						log.debug("Attribute name: " + attributeName);
+						log.debug("Attribute label: " + attributeLabel);
+						log.debug("Attribute definition: " + attributeDefinition);
+						log.debug("Attribute type: " + attributeType);
+						log.debug("Attribute scale: " + attributeScale);
+						log.debug("Attribute unit type: " + attributeUnitType);
+						log.debug("Attribute unit: " + attributeUnit);
+						log.debug("Attribute domain: " + attributeDomain);
 					
 						// look up the characteristic or standard subclasses
 						Resource standard = this.lookupStandard(standardClass, attribute);
@@ -330,20 +330,20 @@ public class AnnotationGenerator {
 
 		for (Identifier pid: identifiers) {
 		
-			logMetacat.debug("Parsing pid: " + pid.getValue());
+			log.debug("Parsing pid: " + pid.getValue());
 			
 			try {
 				
 				// get the package
 				DataPackage dataPackage = this.getDataPackage(pid);
 				String title = dataPackage.getTitle();
-				logMetacat.debug("Title: " + title);
+				log.debug("Title: " + title);
 				
 				Entity[] entities = dataPackage.getEntityList();
 				if (entities != null) {
 					for (Entity entity: entities) {
 						String entityName = entity.getName();
-						logMetacat.debug("Entity name: " + entityName);
+						log.debug("Entity name: " + entityName);
 						Attribute[] attributes = entity.getAttributeList().getAttributes();
 						for (Attribute attribute: attributes) {
 							String attributeName = attribute.getName();
@@ -355,21 +355,21 @@ public class AnnotationGenerator {
 							String attributeUnit = attribute.getUnit();
 							String attributeDomain = attribute.getDomain().getClass().getSimpleName();
 
-							logMetacat.debug("Attribute name: " + attributeName);
-							logMetacat.debug("Attribute label: " + attributeLabel);
-							logMetacat.debug("Attribute definition: " + attributeDefinition);
-							logMetacat.debug("Attribute type: " + attributeType);
-							logMetacat.debug("Attribute scale: " + attributeScale);
-							logMetacat.debug("Attribute unit type: " + attributeUnitType);
-							logMetacat.debug("Attribute unit: " + attributeUnit);
-							logMetacat.debug("Attribute domain: " + attributeDomain);
+							log.debug("Attribute name: " + attributeName);
+							log.debug("Attribute label: " + attributeLabel);
+							log.debug("Attribute definition: " + attributeDefinition);
+							log.debug("Attribute type: " + attributeType);
+							log.debug("Attribute scale: " + attributeScale);
+							log.debug("Attribute unit type: " + attributeUnitType);
+							log.debug("Attribute unit: " + attributeUnit);
+							log.debug("Attribute domain: " + attributeDomain);
 							
 						}		
 					}
 				}
 				
 			} catch (Exception e) {
-				logMetacat.warn("error parsing metadata for: " + pid.getValue(), e);
+				log.warn("error parsing metadata for: " + pid.getValue(), e);
 			}
 		}
 	}
@@ -386,7 +386,7 @@ public class AnnotationGenerator {
 		metadataPid.setValue("tao.1.4");
 		AnnotationGenerator ds = new AnnotationGenerator();
 		String rdfString = ds.generateAnnotation(metadataPid);
-		logMetacat.info("RDF annotation: \n" + rdfString);
+		log.info("RDF annotation: \n" + rdfString);
 		
 	}
 	

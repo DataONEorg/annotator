@@ -7,11 +7,12 @@ import java.util.List;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.log4j.Logger;
 import org.apache.xpath.XPathAPI;
 import org.dataone.annotator.matcher.ConceptMatcher;
 import org.w3c.dom.Node;
@@ -19,7 +20,7 @@ import org.w3c.dom.NodeList;
 
 public class OrcidService implements ConceptMatcher {
 	
-	private static Logger logMetacat = Logger.getLogger(OrcidService.class);
+	private static Log log = LogFactory.getLog(OrcidService.class);
 	
     //private static final String REST_URL = "http://pub.sandbox.orcid.org/v1.1/search/orcid-bio";
     private static final String REST_URL = "http://pub.orcid.org/v1.1/search/orcid-bio";
@@ -82,14 +83,14 @@ public class OrcidService implements ConceptMatcher {
 				for (int i = 0; i< orcidUriNodeList.getLength(); i++) {
 					Node n = orcidUriNodeList.item(i);
 					String orcidUri = n.getFirstChild().getNodeValue();
-					logMetacat.info("Found ORCID URI: " + orcidUri);
+					log.info("Found ORCID URI: " + orcidUri);
 					results.add(orcidUri);
 				}
 				
 			}
 			
 		} catch (Exception e) {
-			logMetacat.error("Could not lookup ORCID using: " + url, e);
+			log.error("Could not lookup ORCID using: " + url, e);
 		}
 		
 		return results;
