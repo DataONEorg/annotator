@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.dataone.annotator.matcher.ConceptItem;
 import org.dataone.annotator.matcher.ConceptMatcher;
 import org.dataone.annotator.matcher.ConceptMatcherFactory;
 import org.dataone.client.v2.CNode;
@@ -162,9 +163,9 @@ public class AnnotationGenerator {
 		if (creators != null && creators.size() > 0) {	
 			// use an orcid if we can find one from their system
 			String creatorText = creators.get(0).getOrganization() + " " + creators.get(0).getSurName() + " " + creators.get(0).getGivenNames();
-			List<String> orcidUris = orcidMatcher.getConcepts(creatorText);
-			if (orcidUris != null) {
-				String orcidUri = orcidUris.get(0);
+			List<ConceptItem> concepts = orcidMatcher.getConcepts(creatorText);
+			if (concepts != null) {
+				String orcidUri = concepts.get(0).getUri().toString();
 				p1 = m.createIndividual(orcidUri, personClass);
 				p1.addProperty(identifierProperty, orcidUri);
 			} else {
@@ -279,37 +280,37 @@ public class AnnotationGenerator {
 		
 	}
 	
-	private Resource lookupStandard(OntClass standardClass, Attribute attribute) {
+	private Resource lookupStandard(OntClass standardClass, Attribute attribute) throws Exception {
 		// what's our unit?
 		String unit = attribute.getUnit().toLowerCase();
 		
 		// look up the concept using the matcher
-		List<String> concepts = conceptMatcher.getConcepts(unit);
-		return ResourceFactory.createResource(concepts.get(0));
+		List<ConceptItem> concepts = conceptMatcher.getConcepts(unit);
+		return ResourceFactory.createResource(concepts.get(0).getUri().toString());
 		//return BioPortalService.lookupAnnotationClass(standardClass, unit, OBOE_SBC);
 	}
 	
-	private Resource lookupCharacteristic(OntClass characteristicClass, Attribute attribute) {
+	private Resource lookupCharacteristic(OntClass characteristicClass, Attribute attribute) throws Exception {
 		// what are we looking for?
 		String label = attribute.getLabel().toLowerCase();
 		String definition = attribute.getDefinition();
 		String text = label + " " + definition;
 		
 		// look up the concept using the matcher
-		List<String> concepts = conceptMatcher.getConcepts(text);
-		return ResourceFactory.createResource(concepts.get(0));
+		List<ConceptItem> concepts = conceptMatcher.getConcepts(text);
+		return ResourceFactory.createResource(concepts.get(0).getUri().toString());
 		//return BioPortalService.lookupAnnotationClass(characteristicClass, text, OBOE_SBC);
 		
 	}
 	
-	private Resource lookupEntity(OntClass entityClass, Entity entity) {
+	private Resource lookupEntity(OntClass entityClass, Entity entity) throws Exception {
 		// what's our description like?
 		String name = entity.getName();
 		String definition = entity.getDefinition();
 		
 		// look up the concept using the matcher
-		List<String> concepts = conceptMatcher.getConcepts(definition);
-		return ResourceFactory.createResource(concepts.get(0));
+		List<ConceptItem> concepts = conceptMatcher.getConcepts(definition);
+		return ResourceFactory.createResource(concepts.get(0).getUri().toString());
 		//return BioPortalService.lookupAnnotationClass(entityClass, definition, OBOE_SBC);
 		
 	}

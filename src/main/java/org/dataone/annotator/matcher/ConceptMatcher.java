@@ -4,6 +4,6 @@ import java.util.List;
 
 public interface ConceptMatcher {
 	
-	public List<String> getConcepts(String fullText);
+	public List<ConceptItem> getConcepts(String fullText) throws Exception;
 
 }

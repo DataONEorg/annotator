@@ -1,6 +1,7 @@
 package org.dataone.annotator.matcher.bioportal;
 
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.xpath.XPathAPI;
+import org.dataone.annotator.matcher.ConceptItem;
 import org.dataone.annotator.matcher.ConceptMatcher;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -29,11 +31,14 @@ public class BioPortalService implements ConceptMatcher {
     private static final String API_KEY = "24e4775e-54e0-11e0-9d7b-005056aa3316";
 
     @Override
-    public List<String> getConcepts(String text) {
-    	List <String> concepts = new ArrayList<String>();
+    public List<ConceptItem> getConcepts(String text) throws Exception {
+    	List <ConceptItem> concepts = new ArrayList<ConceptItem>();
     	List<Resource> resources = lookupAnnotationClasses(null, text, null);
+    	int i = resources.size();
     	for (Resource resource: resources) {
-    		concepts.add(resource.getURI());
+    		double rank = i--/resources.size();
+    		ConceptItem concept = new ConceptItem(new URI(resource.getURI()), rank);
+    		concepts.add(concept);
     	}
     	return concepts;
     	
@@ -86,7 +91,7 @@ public class BioPortalService implements ConceptMatcher {
 						try {
 							isSubclass = superClass.hasSubClass(subclass);
 						} catch (ConversionException ce) {
-							log.warn("Skipping unknown subclass: " + classURI, ce);
+							log.warn("Skipping unknown subclass: " + classURI + " -- " + ce.getMessage() );
 							// try the next one
 							continue;
 						}
