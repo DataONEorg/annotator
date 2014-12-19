@@ -20,7 +20,7 @@ package org.dataone.annotator.matcher.bioportal;
 
 import static org.junit.Assert.assertEquals;
 
-import org.dataone.annotator.generator.AnnotationGenerator;
+import org.dataone.annotator.generator.oa.OAAnnotationGenerator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,14 +58,14 @@ public class BioPortalServiceTest {
 	public void testLookup() {
 		// set up our simple model for testing: Characteristic <- Temperature
 		OntModel m = ModelFactory.createOntologyModel();
-		OntClass characteristicClass = m.createClass(AnnotationGenerator.oboe_core + "Characteristic");
-		OntClass temperatureClass = m.createClass(AnnotationGenerator.oboe_characteristics + "Temperature");
+		OntClass characteristicClass = m.createClass(OAAnnotationGenerator.oboe_core + "Characteristic");
+		OntClass temperatureClass = m.createClass(OAAnnotationGenerator.oboe_characteristics + "Temperature");
 		temperatureClass.addSuperClass(characteristicClass);
 		
 		// look up the annotation recommendation from BioPortal
 		String text = "Air temperature";
-		Resource retClass = BioPortalService.lookupAnnotationClass(characteristicClass, text, AnnotationGenerator.OBOE_SBC);
-		assertEquals(AnnotationGenerator.oboe_characteristics + "Temperature", retClass.getURI());
+		Resource retClass = BioPortalService.lookupAnnotationClass(characteristicClass, text, OAAnnotationGenerator.OBOE_SBC);
+		assertEquals(OAAnnotationGenerator.oboe_characteristics + "Temperature", retClass.getURI());
 	}
 
 }
