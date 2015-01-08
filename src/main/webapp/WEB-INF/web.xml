@@ -3,13 +3,16 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
   version="2.5">
-  <display-name>DataONE Annotator Service</display-name>
+  <display-name>DataONE Annotator Services</display-name>
+  
+  <!--  AnnotatorStore proxy to CN storage -->
   <servlet>
-    <servlet-name>annotatorServlet</servlet-name>
-  	<servlet-class>org.dataone.annotator.AnnotatorServlet</servlet-class>
+    <servlet-name>annotatorStoreRestServlet</servlet-name>
+  	<servlet-class>org.dataone.annotator.store.AnnotatorRestServlet</servlet-class>
   </servlet>
   <servlet-mapping>
-  	<servlet-name>annotatorServlet</servlet-name>
+  	<servlet-name>annotatorStoreRestServlet</servlet-name>
   	<url-pattern>/annotator/*</url-pattern>
   </servlet-mapping>
+  
 </web-app>

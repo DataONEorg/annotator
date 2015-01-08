@@ -8,6 +8,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <d1_libclient_version>2.0.0-SNAPSHOT</d1_libclient_version>
+        <d1_portal_version>2.0.0-SNAPSHOT</d1_portal_version>
     </properties>
     <repositories>
         <repository>
@@ -84,8 +85,8 @@
 		<!-- DataONE dependencies -->
 		<dependency>
 			<groupId>org.dataone</groupId>
-			<artifactId>d1_libclient_java</artifactId>
-			<version>${d1_libclient_version}</version>
+			<artifactId>d1_portal</artifactId>
+			<version>${d1_portal_version}</version>
 			<!-- exclude extraneous artifacts (jars) -->
 			<exclusions>
 		        <exclusion>
