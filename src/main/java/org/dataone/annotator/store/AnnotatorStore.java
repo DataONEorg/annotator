@@ -26,7 +26,6 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.dataone.client.auth.CertificateManager;
 import org.dataone.client.v2.CNode;
-import org.dataone.client.v2.MNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.portal.PortalCertificateManager;
 import org.dataone.portal.TokenGenerator;
@@ -126,7 +125,7 @@ public class AnnotatorStore {
 		sysmeta.setRightsHolder(rightsHolder);
 		sysmeta.setSubmitter(rightsHolder);
 
-		NodeReference authoritativeMemberNode = storageNode.getCapabilities().getIdentifier();
+		NodeReference authoritativeMemberNode = storageNode.getNodeId();
 		sysmeta.setAuthoritativeMemberNode(authoritativeMemberNode );
 		sysmeta.setOriginMemberNode(authoritativeMemberNode);
 		
