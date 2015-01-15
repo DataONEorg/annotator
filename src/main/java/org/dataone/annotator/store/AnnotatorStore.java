@@ -25,8 +25,8 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.dataone.client.auth.CertificateManager;
-import org.dataone.client.v2.CNode;
-import org.dataone.client.v2.itk.D1Client;
+import org.dataone.client.v1.CNode;
+import org.dataone.client.v1.itk.D1Client;
 import org.dataone.portal.PortalCertificateManager;
 import org.dataone.portal.TokenGenerator;
 import org.dataone.service.exceptions.BaseException;
@@ -43,7 +43,7 @@ import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.util.ChecksumUtil;
-import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.service.types.v1.SystemMetadata;
 import org.dataone.service.util.Constants;
 import org.dataone.service.util.DateTimeMarshaller;
 
@@ -179,7 +179,7 @@ public class AnnotatorStore {
 		// generate sys meta
 		SystemMetadata sysmeta = computeSystemMetadata(annotation);
 		sysmeta.setIdentifier(pid);
-		sysmeta.setSeriesId(sid);
+		//sysmeta.setSeriesId(sid);
 		
 		// create it on the node
 		InputStream object = new ByteArrayInputStream(annotation.toJSONString().getBytes(DEFAULT_ENCODING));
@@ -284,7 +284,9 @@ public class AnnotatorStore {
 		objectFormatId.setValue(ANNOTATION_FORMAT_ID);
 		Integer start = 0;
 		Integer count = 1000;
-		ObjectList objects = storageNode.listObjects(session, null, null, objectFormatId, null, true, start, count);
+		//ObjectList objects = storageNode.listObjects(session, null, null, objectFormatId, null, true, start, count);
+		ObjectList objects = storageNode.listObjects(session, null, null, objectFormatId, true, start, count);
+
 		for (ObjectInfo info: objects.getObjectInfoList()) {
 			Identifier pid = info.getIdentifier();
 			SystemMetadata sysMeta = storageNode.getSystemMetadata(session, pid);
