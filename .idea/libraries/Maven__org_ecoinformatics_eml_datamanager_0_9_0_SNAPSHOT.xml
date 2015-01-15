@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.ecoinformatics.eml:datamanager:0.9.0-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/ecoinformatics/eml/datamanager/0.9.0-SNAPSHOT/datamanager-0.9.0-20141202.171049-5.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/ecoinformatics/eml/datamanager/0.9.0-SNAPSHOT/datamanager-0.9.0-20141202.171049-5-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/ecoinformatics/eml/datamanager/0.9.0-SNAPSHOT/datamanager-0.9.0-20141202.171049-5-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
