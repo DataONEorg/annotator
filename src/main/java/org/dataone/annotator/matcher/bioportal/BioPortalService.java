@@ -14,6 +14,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.xpath.XPathAPI;
 import org.dataone.annotator.matcher.ConceptItem;
 import org.dataone.annotator.matcher.ConceptMatcher;
+import org.dataone.annotator.matcher.QueryItem;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
@@ -31,9 +32,9 @@ public class BioPortalService implements ConceptMatcher {
     private static final String API_KEY = "24e4775e-54e0-11e0-9d7b-005056aa3316";
 
     @Override
-    public List<ConceptItem> getConcepts(String text) throws Exception {
+    public List<ConceptItem> getConcepts(QueryItem query) throws Exception {
     	List <ConceptItem> concepts = new ArrayList<ConceptItem>();
-    	List<Resource> resources = lookupAnnotationClasses(null, text, null);
+    	List<Resource> resources = lookupAnnotationClasses(null, query.toString(), null);
     	int i = resources.size();
     	for (Resource resource: resources) {
     		double rank = i--/resources.size();

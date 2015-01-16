@@ -232,7 +232,7 @@ public class AnnotatorStore {
 	}
 
 	/**
-	 * Query annotation store using given query expression
+	 * QueryItem annotation store using given query expression
 	 * @param query
 	 * @return result listing the total matches and each annotation as a "row"
 	 * @throws Exception
