@@ -1,5 +1,6 @@
 package org.dataone.annotator.matcher;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -13,6 +14,7 @@ public class KeywordItem {
 
     public KeywordItem(String keyword) {
         this.keyword = keyword;
+        types = new ArrayList<String>();
     }
     public KeywordItem(String keyword, List<String> types){
         this.keyword = keyword;
