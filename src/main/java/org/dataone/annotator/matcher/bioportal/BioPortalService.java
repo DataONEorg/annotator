@@ -32,9 +32,9 @@ public class BioPortalService implements ConceptMatcher {
     private static final String API_KEY = "24e4775e-54e0-11e0-9d7b-005056aa3316";
 
     @Override
-    public List<ConceptItem> getConcepts(QueryItem query) throws Exception {
+    public List<ConceptItem> getConcepts(String text) throws Exception {
     	List <ConceptItem> concepts = new ArrayList<ConceptItem>();
-    	List<Resource> resources = lookupAnnotationClasses(null, query.toString(), null);
+    	List<Resource> resources = lookupAnnotationClasses(null, text, null);
     	int i = resources.size();
     	for (Resource resource: resources) {
     		double rank = i--/resources.size();
@@ -44,6 +44,10 @@ public class BioPortalService implements ConceptMatcher {
     	return concepts;
     	
     }
+
+	public List<ConceptItem> getConcepts(QueryItem queryItem) throws Exception {
+		return getConcepts(queryItem.toString());
+	}
     
     /**
 	 * Look up possible concept from BioPortal annotation service.

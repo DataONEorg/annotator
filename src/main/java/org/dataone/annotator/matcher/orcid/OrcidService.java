@@ -17,10 +17,13 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.xpath.XPathAPI;
 import org.dataone.annotator.matcher.ConceptItem;
 import org.dataone.annotator.matcher.ConceptMatcher;
+import org.dataone.annotator.matcher.QueryItem;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-public class OrcidService implements ConceptMatcher {
+public
+
+class OrcidService implements ConceptMatcher {
 	
 	private static Log log = LogFactory.getLog(OrcidService.class);
 	
@@ -32,8 +35,14 @@ public class OrcidService implements ConceptMatcher {
     	return lookupOrcid(text, null, null, null);
     	
     }
-    
+
+	@Override
+	public List<ConceptItem> getConcepts(QueryItem queryItem) throws Exception {
+		return lookupOrcid(queryItem.toString(), null, null, null);
+
+	}
     /**
+	 *
 	 * Look up possible ORCID from orcid service.
 	 * @see "http://support.orcid.org/knowledgebase/articles/132354-searching-with-the-public-api"
 	 * @param surName
