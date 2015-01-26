@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -25,8 +26,8 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.dataone.client.auth.CertificateManager;
-import org.dataone.client.v1.CNode;
-import org.dataone.client.v1.itk.D1Client;
+import org.dataone.client.v2.MNode;
+import org.dataone.client.v2.itk.D1Client;
 import org.dataone.portal.PortalCertificateManager;
 import org.dataone.portal.TokenGenerator;
 import org.dataone.service.exceptions.BaseException;
@@ -36,6 +37,7 @@ import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.NodeReference;
+import org.dataone.service.types.v1.NodeType;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectInfo;
 import org.dataone.service.types.v1.ObjectList;
@@ -43,7 +45,8 @@ import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.util.ChecksumUtil;
-import org.dataone.service.types.v1.SystemMetadata;
+import org.dataone.service.types.v2.Node;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.Constants;
 import org.dataone.service.util.DateTimeMarshaller;
 
@@ -64,7 +67,7 @@ public class AnnotatorStore {
 
 	private static final String DEFAULT_ENCODING = "UTF-8";
 	
-	private CNode storageNode = null;
+	private MNode storageNode = null;
 
 	private Session session;
 	
@@ -97,8 +100,20 @@ public class AnnotatorStore {
 		// NOTE: if session is null at this point, we are default to whatever CertificateManager has
 		// which may not be the original user from the web
 		
+		// use an available MN - assume replica nodes allow write operations
+		NodeReference nodeRef = null;
+		Iterator<Node> nodeIter = D1Client.getCN().listNodes().getNodeList().iterator();
+		while (nodeIter.hasNext()) {
+			Node node = nodeIter.next();
+			if (node.getType().equals(NodeType.MN) && node.isReplicate()) {
+				nodeRef = node.getIdentifier();
+			}
+		}
+		
 		// use this node for storing/retrieving annotations
-		storageNode = D1Client.getCN(session);
+		//storageNode = D1Client.getMN(session);
+		storageNode = D1Client.getMN(nodeRef );
+
 		
 	}
 	
@@ -179,7 +194,7 @@ public class AnnotatorStore {
 		// generate sys meta
 		SystemMetadata sysmeta = computeSystemMetadata(annotation);
 		sysmeta.setIdentifier(pid);
-		//sysmeta.setSeriesId(sid);
+		sysmeta.setSeriesId(sid);
 		
 		// create it on the node
 		InputStream object = new ByteArrayInputStream(annotation.toJSONString().getBytes(DEFAULT_ENCODING));
@@ -209,9 +224,44 @@ public class AnnotatorStore {
 	 * @param partialAnnotation
 	 * @return
 	 */
-	public JSONObject update(String id, JSONObject partialAnnotation) {
-		// TODO Auto-generated method stub
-		return null;
+	public JSONObject update(String id, JSONObject partialAnnotation) throws Exception {
+		// we really just use SID to mke it look like an update to the same identifier
+		
+		// use the dataone API to update the annotation
+		Identifier sid = new Identifier();
+		sid.setValue(id);
+		
+		// get the original pid
+		Identifier originalPid = storageNode.getSystemMetadata(session, sid).getIdentifier();
+		
+		// create identifier for the new revision
+		Identifier pid = storageNode.generateIdentifier(session, "UUID", "annotation");
+				
+		// get the existing annotation content
+		JSONObject annotation = this.read(id);
+		
+		// merge the existing and new properties
+		annotation.putAll(partialAnnotation);
+		
+		// add audit properties to the annotation
+		annotation.put("id", sid.getValue());
+		annotation.put("user", session.getSubject().getValue());
+		Date now = Calendar.getInstance().getTime();
+		//annotation.put("created", DateTimeMarshaller.serializeDateToUTC(now));
+		annotation.put("updated", DateTimeMarshaller.serializeDateToUTC(now));
+
+		// generate sys meta
+		SystemMetadata sysmeta = computeSystemMetadata(annotation);
+		sysmeta.setIdentifier(pid);
+		sysmeta.setSeriesId(sid);
+		sysmeta.setObsoletes(originalPid);
+		
+		// update it on the node
+		InputStream object = new ByteArrayInputStream(annotation.toJSONString().getBytes(DEFAULT_ENCODING));
+		storageNode.update(session, originalPid, object, pid, sysmeta);
+		
+		return annotation;
+		
 	}
 
 	/**
@@ -225,13 +275,14 @@ public class AnnotatorStore {
 		Identifier sid = new Identifier();
 		sid.setValue(id);
 		
-		//MNodeService.getInstance(request).delete(session, sid);
-		storageNode.archive(session, sid);
+		//storageNode.archive(session, sid);
+		storageNode.delete(session, sid);
+
 
 	}
 
 	/**
-	 * QueryItem annotation store using given query expression
+	 * Query annotation store using given query expression
 	 * @param query
 	 * @return result listing the total matches and each annotation as a "row"
 	 * @throws Exception
@@ -284,8 +335,8 @@ public class AnnotatorStore {
 		objectFormatId.setValue(ANNOTATION_FORMAT_ID);
 		Integer start = 0;
 		Integer count = 1000;
-		//ObjectList objects = storageNode.listObjects(session, null, null, objectFormatId, null, true, start, count);
-		ObjectList objects = storageNode.listObjects(session, null, null, objectFormatId, true, start, count);
+		ObjectList objects = storageNode.listObjects(session, null, null, objectFormatId, null, true, start, count);
+		//ObjectList objects = storageNode.listObjects(session, null, null, objectFormatId, true, start, count);
 
 		for (ObjectInfo info: objects.getObjectInfoList()) {
 			Identifier pid = info.getIdentifier();
