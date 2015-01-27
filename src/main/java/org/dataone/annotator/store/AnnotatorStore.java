@@ -87,11 +87,20 @@ public class AnnotatorStore {
 		}
 		
 		// try getting the certificate from the portal so that we can act as proxy for the user
-		if (session != null) {
+		if (session == null) {
 			try {
+				// register the portal certificate with the certificate manager for the calling subject
 				X509Certificate certificate = PortalCertificateManager.getInstance().getCertificate(request);
 				PrivateKey key = PortalCertificateManager.getInstance().getPrivateKey(request);
-				CertificateManager.getInstance().registerCertificate(session.getSubject().getValue(), certificate, key);
+				String certSubject = CertificateManager.getInstance().getSubjectDN(certificate);
+				CertificateManager.getInstance().registerCertificate(certSubject , certificate, key);
+				
+				// now the methods will "know" who is calling them - used in conjunction with Certificate Manager
+				session = new Session();
+				Subject subject = new Subject();
+				subject.setValue(certSubject);
+				session.setSubject(subject);
+				
 			} catch (Exception e) {
 				log.error("cound not register user session from portal: " + e.getMessage(), e);
 			}
