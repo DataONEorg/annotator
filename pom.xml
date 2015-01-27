@@ -95,13 +95,15 @@
 		</dependency>
 
 		<!-- linkipedia dependencies -->
+		<!--  
 		<dependency>
 			<groupId>edu.rpi.tw.linkipedia</groupId>
 			<artifactId>linkipedia</artifactId>
 			<version>1.0</version>
 		</dependency>
-
+		-->
 		<!-- annotator dependencies -->
+		<!--
 		<dependency>
 			<groupId>org.apache.uima</groupId>
 			<artifactId>Tagger</artifactId>
@@ -504,9 +506,8 @@
 			<artifactId>xom</artifactId>
 			<version>1.2.10</version>
 		</dependency>
-
-
-
+		-->
+		
 		<!-- DataONE dependencies -->
 		<dependency>
 			<groupId>org.dataone</groupId>
