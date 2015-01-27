@@ -5,7 +5,7 @@
   version="2.5">
   <display-name>DataONE Annotator Services</display-name>
   
-  <!--  AnnotatorStore proxy to CN storage -->
+  <!--  AnnotatorStore proxy to MN storage -->
   <servlet>
     <servlet-name>annotatorStoreRestServlet</servlet-name>
   	<servlet-class>org.dataone.annotator.store.AnnotatorRestServlet</servlet-class>
