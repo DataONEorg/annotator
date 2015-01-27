@@ -28,6 +28,7 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.dataone.client.auth.CertificateManager;
 import org.dataone.client.v2.MNode;
 import org.dataone.client.v2.itk.D1Client;
+import org.dataone.configuration.Settings;
 import org.dataone.portal.PortalCertificateManager;
 import org.dataone.portal.TokenGenerator;
 import org.dataone.service.exceptions.BaseException;
@@ -110,16 +111,25 @@ public class AnnotatorStore {
 		// NOTE: if session is null at this point, we are default to whatever CertificateManager has
 		// which may not be the original user from the web
 		
-		// use an available MN with tier 3 support enabled
+		// use configured node ref
 		NodeReference nodeRef = null;
-		Iterator<Node> nodeIter = D1Client.getCN().listNodes().getNodeList().iterator();
-		while (nodeIter.hasNext()) {
-			Node node = nodeIter.next();
-			if (node.getType().equals(NodeType.MN)) {
-				for (Service service: node.getServices().getServiceList()) {
-					if (service.getName().equalsIgnoreCase("MNStorage") && service.getAvailable()) {
-						nodeRef = node.getIdentifier();
-						break;
+		String nodeId = Settings.getConfiguration().getString("annotator.nodeid");
+		if (nodeId != null) {
+			nodeRef = new NodeReference();
+			nodeRef.setValue(nodeId);
+		}
+
+		// use another available MN with tier 3 support enabled
+		if (nodeRef == null) {
+			Iterator<Node> nodeIter = D1Client.getCN().listNodes().getNodeList().iterator();
+			while (nodeIter.hasNext()) {
+				Node node = nodeIter.next();
+				if (node.getType().equals(NodeType.MN)) {
+					for (Service service: node.getServices().getServiceList()) {
+						if (service.getName().equalsIgnoreCase("MNStorage") && service.getAvailable()) {
+							nodeRef = node.getIdentifier();
+							break;
+						}
 					}
 				}
 			}
@@ -127,7 +137,7 @@ public class AnnotatorStore {
 		
 		// use this node for storing/retrieving annotations
 		//storageNode = D1Client.getMN(session);
-		storageNode = D1Client.getMN(nodeRef );
+		storageNode = D1Client.getMN(nodeRef);
 
 		
 	}
