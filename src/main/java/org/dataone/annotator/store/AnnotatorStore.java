@@ -42,6 +42,7 @@ import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectInfo;
 import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v1.Permission;
+import org.dataone.service.types.v1.Service;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.util.ChecksumUtil;
@@ -109,13 +110,18 @@ public class AnnotatorStore {
 		// NOTE: if session is null at this point, we are default to whatever CertificateManager has
 		// which may not be the original user from the web
 		
-		// use an available MN - assume replica nodes allow write operations
+		// use an available MN with tier 3 support enabled
 		NodeReference nodeRef = null;
 		Iterator<Node> nodeIter = D1Client.getCN().listNodes().getNodeList().iterator();
 		while (nodeIter.hasNext()) {
 			Node node = nodeIter.next();
-			if (node.getType().equals(NodeType.MN) && node.isReplicate()) {
-				nodeRef = node.getIdentifier();
+			if (node.getType().equals(NodeType.MN)) {
+				for (Service service: node.getServices().getServiceList()) {
+					if (service.getName().equalsIgnoreCase("MNStorage") && service.getAvailable()) {
+						nodeRef = node.getIdentifier();
+						break;
+					}
+				}
 			}
 		}
 		
