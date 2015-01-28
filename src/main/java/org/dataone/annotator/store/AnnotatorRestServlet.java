@@ -24,6 +24,7 @@ package org.dataone.annotator.store;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.cert.X509Certificate;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -36,7 +37,11 @@ import net.minidev.json.JSONObject;
 import net.minidev.json.JSONValue;
 
 import org.apache.log4j.Logger;
+import org.dataone.client.auth.CertificateManager;
+import org.dataone.portal.PortalCertificateManager;
+import org.dataone.portal.TokenGenerator;
 import org.dataone.service.exceptions.BaseException;
+import org.dataone.service.types.v1.SubjectInfo;
 
 /**
  * Metacat REST handler for Annotator storage API
@@ -108,6 +113,30 @@ public class AnnotatorRestServlet extends HttpServlet {
         	try {
 				JSONObject results = as.search(query);
 				results.writeJSONString(response.getWriter());
+				return;
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new ServletException(e);
+			}
+        	
+        }
+        
+        // handle token request
+        if (resource.startsWith("token")) {
+        	// generate a token for this user based on information in the request
+        	try {        	
+        		X509Certificate certificate = PortalCertificateManager.getInstance().getCertificate(request);
+        		String userId = CertificateManager.getInstance().getSubjectDN(certificate);        		
+        		String fullName = null;
+        		SubjectInfo subjectInfo = CertificateManager.getInstance().getSubjectInfo(certificate);
+        		if (subjectInfo != null) {
+        			fullName = subjectInfo.getPerson(0).getFamilyName();
+        			if (subjectInfo.getPerson(0).getGivenNameList() != null && subjectInfo.getPerson(0).getGivenNameList().size() > 0) {
+        				fullName = subjectInfo.getPerson(0).getGivenName(0) + fullName;
+        			}
+        		}
+    			String token = TokenGenerator.getJWT(userId, fullName);
+				response.getWriter().print(token);
 				return;
 			} catch (Exception e) {
 				e.printStackTrace();
