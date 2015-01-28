@@ -363,7 +363,7 @@ public class AnnotatorStore {
 		ObjectList objects = storageNode.listObjects(session, null, null, objectFormatId, null, true, start, count);
 		//ObjectList objects = storageNode.listObjects(session, null, null, objectFormatId, true, start, count);
 
-		if (objects != null) {
+		if (objects != null && objects.getCount() > 0) {
 			for (ObjectInfo info: objects.getObjectInfoList()) {
 				Identifier pid = info.getIdentifier();
 				SystemMetadata sysMeta = storageNode.getSystemMetadata(session, pid);
