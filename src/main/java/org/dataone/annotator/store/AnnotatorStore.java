@@ -363,15 +363,17 @@ public class AnnotatorStore {
 		ObjectList objects = storageNode.listObjects(session, null, null, objectFormatId, null, true, start, count);
 		//ObjectList objects = storageNode.listObjects(session, null, null, objectFormatId, true, start, count);
 
-		for (ObjectInfo info: objects.getObjectInfoList()) {
-			Identifier pid = info.getIdentifier();
-			SystemMetadata sysMeta = storageNode.getSystemMetadata(session, pid);
-			// remember we don't have true delete yet
-			if ( (sysMeta.getArchived() != null && sysMeta.getArchived().booleanValue()) || sysMeta.getObsoletedBy() != null) {
-				continue;
+		if (objects != null) {
+			for (ObjectInfo info: objects.getObjectInfoList()) {
+				Identifier pid = info.getIdentifier();
+				SystemMetadata sysMeta = storageNode.getSystemMetadata(session, pid);
+				// remember we don't have true delete yet
+				if ( (sysMeta.getArchived() != null && sysMeta.getArchived().booleanValue()) || sysMeta.getObsoletedBy() != null) {
+					continue;
+				}
+				JSONObject annotation = this.read(pid.getValue());
+				annotations.add(annotation);
 			}
-			JSONObject annotation = this.read(pid.getValue());
-			annotations.add(annotation);
 		}
 
 		return annotations ;
