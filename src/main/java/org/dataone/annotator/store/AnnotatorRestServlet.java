@@ -123,19 +123,22 @@ public class AnnotatorRestServlet extends HttpServlet {
         
         // handle token request
         if (resource.startsWith("token")) {
+        	String token = "";
         	// generate a token for this user based on information in the request
         	try {        	
         		X509Certificate certificate = PortalCertificateManager.getInstance().getCertificate(request);
-        		String userId = CertificateManager.getInstance().getSubjectDN(certificate);        		
-        		String fullName = null;
-        		SubjectInfo subjectInfo = CertificateManager.getInstance().getSubjectInfo(certificate);
-        		if (subjectInfo != null) {
-        			fullName = subjectInfo.getPerson(0).getFamilyName();
-        			if (subjectInfo.getPerson(0).getGivenNameList() != null && subjectInfo.getPerson(0).getGivenNameList().size() > 0) {
-        				fullName = subjectInfo.getPerson(0).getGivenName(0) + fullName;
-        			}
+        		if (certificate != null) {
+	        		String userId = CertificateManager.getInstance().getSubjectDN(certificate);        		
+	        		String fullName = null;
+	        		SubjectInfo subjectInfo = CertificateManager.getInstance().getSubjectInfo(certificate);
+	        		if (subjectInfo != null) {
+	        			fullName = subjectInfo.getPerson(0).getFamilyName();
+	        			if (subjectInfo.getPerson(0).getGivenNameList() != null && subjectInfo.getPerson(0).getGivenNameList().size() > 0) {
+	        				fullName = subjectInfo.getPerson(0).getGivenName(0) + fullName;
+	        			}
+	        		}
+	    			token = TokenGenerator.getJWT(userId, fullName);
         		}
-    			String token = TokenGenerator.getJWT(userId, fullName);
 				response.getWriter().print(token);
 				return;
 			} catch (Exception e) {
