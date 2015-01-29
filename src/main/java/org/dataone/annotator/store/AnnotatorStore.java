@@ -75,9 +75,13 @@ public class AnnotatorStore {
 	
 	public AnnotatorStore(HttpServletRequest request) throws BaseException {
 		
+		log.debug("Inspecting request for session information");
+		
 		// look for certificate-based session (d1 default) 
 		try {
 			session = CertificateManager.getInstance().getSession(request);
+			log.debug("Session from original request: " + session);
+
 		} catch (InvalidToken e) {
 			log.warn(e.getMessage(), e);
 		}
@@ -86,11 +90,15 @@ public class AnnotatorStore {
 		if (session == null) {
 			String token = request.getHeader("x-annotator-auth-token");
 			session = TokenGenerator.getSession(token);
+			log.debug("Session from x-annotator-auth-token: " + session);
 		}
 		
 		// see if we can proxy as the user
 		if (session != null) {
 			try {
+				
+				log.debug("looking up certificate from portal");
+				
 				// register the portal certificate with the certificate manager for the calling subject
 				X509Certificate certificate = PortalCertificateManager.getInstance().getCertificate(request);
 				PrivateKey key = PortalCertificateManager.getInstance().getPrivateKey(request);
@@ -98,9 +106,13 @@ public class AnnotatorStore {
 				String sessionSubject = session.getSubject().getValue();
 
 				// TODO: verify that the users are the same
-				
+				log.debug("Certifcate subject: " + certSubject);
+				log.debug("Session subject: " + sessionSubject);
+
 				// now the methods will "know" who is calling them - used in conjunction with Certificate Manager
 				CertificateManager.getInstance().registerCertificate(certSubject , certificate, key);
+				log.debug("Registered portal certificate for: " + certSubject);
+
 				session = new Session();
 				Subject subject = new Subject();
 				subject.setValue(certSubject);
