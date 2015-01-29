@@ -97,7 +97,7 @@ public class AnnotatorStore {
 		if (session != null) {
 			try {
 				
-				log.debug("looking up certificate from portal");
+				log.warn("looking up certificate from portal");
 				
 				// register the portal certificate with the certificate manager for the calling subject
 				X509Certificate certificate = PortalCertificateManager.getInstance().getCertificate(request);
@@ -106,12 +106,12 @@ public class AnnotatorStore {
 				String sessionSubject = session.getSubject().getValue();
 
 				// TODO: verify that the users are the same
-				log.debug("Certifcate subject: " + certSubject);
-				log.debug("Session subject: " + sessionSubject);
+				log.warn("Certifcate subject: " + certSubject);
+				log.warn("Session subject: " + sessionSubject);
 
 				// now the methods will "know" who is calling them - used in conjunction with Certificate Manager
 				CertificateManager.getInstance().registerCertificate(certSubject , certificate, key);
-				log.debug("Registered portal certificate for: " + certSubject);
+				log.warn("Registered portal certificate for: " + certSubject);
 
 				session = new Session();
 				Subject subject = new Subject();
