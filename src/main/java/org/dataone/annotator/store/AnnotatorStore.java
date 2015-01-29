@@ -88,16 +88,19 @@ public class AnnotatorStore {
 			session = TokenGenerator.getSession(token);
 		}
 		
-		// try getting the certificate from the portal so that we can act as proxy for the user
-		if (session == null) {
+		// see if we can proxy as the user
+		if (session != null) {
 			try {
 				// register the portal certificate with the certificate manager for the calling subject
 				X509Certificate certificate = PortalCertificateManager.getInstance().getCertificate(request);
 				PrivateKey key = PortalCertificateManager.getInstance().getPrivateKey(request);
 				String certSubject = CertificateManager.getInstance().getSubjectDN(certificate);
-				CertificateManager.getInstance().registerCertificate(certSubject , certificate, key);
+				String sessionSubject = session.getSubject().getValue();
+
+				// TODO: verify that the users are the same
 				
 				// now the methods will "know" who is calling them - used in conjunction with Certificate Manager
+				CertificateManager.getInstance().registerCertificate(certSubject , certificate, key);
 				session = new Session();
 				Subject subject = new Subject();
 				subject.setValue(certSubject);
