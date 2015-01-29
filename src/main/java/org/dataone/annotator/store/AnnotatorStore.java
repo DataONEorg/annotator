@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 
@@ -88,6 +89,7 @@ public class AnnotatorStore {
 		
 		// try getting it from the token (annotator library)
 		if (session == null) {
+			debugHeaders(request);
 			String token = request.getHeader("x-annotator-auth-token");
 			session = TokenGenerator.getSession(token);
 			log.debug("Session from x-annotator-auth-token: " + session);
@@ -155,6 +157,15 @@ public class AnnotatorStore {
 		storageNode = D1Client.getMN(nodeRef);
 
 		
+	}
+	
+	private void debugHeaders(HttpServletRequest request) {
+		Enumeration<String> headers = request.getHeaderNames();
+		while (headers.hasMoreElements()) {
+			String name = (String) headers.nextElement();
+			String value = request.getHeader(name);
+			log.debug("Header: " + name + "=" + value);
+		}
 	}
 	
 	/**
