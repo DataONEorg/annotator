@@ -28,6 +28,7 @@ import java.security.cert.X509Certificate;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -138,6 +139,12 @@ public class AnnotatorRestServlet extends HttpServlet {
 	        			}
 	        		}
 	    			token = TokenGenerator.getJWT(userId, fullName);
+	    			
+	    			// make sure we keep the cookie on the reponse
+	        		Cookie cookie = PortalCertificateManager.getInstance().getCookie(request);
+	        		String identifier = cookie.getValue();
+					PortalCertificateManager.getInstance().setCookie(identifier, response);
+
         		}
 				response.getWriter().print(token);
 				return;
