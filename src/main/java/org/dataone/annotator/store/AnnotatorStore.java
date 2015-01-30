@@ -165,6 +165,8 @@ public class AnnotatorStore {
 			String name = (String) headers.nextElement();
 			String value = request.getHeader(name);
 			log.debug("Header: " + name + "=" + value);
+			System.out.println("Header: " + name + "=" + value);
+
 		}
 	}
 	
