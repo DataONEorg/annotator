@@ -4,6 +4,7 @@
 package org.dataone.annotator.store;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
@@ -162,7 +163,9 @@ public class AnnotatorStore {
 			session = null;
 			String nodeProperties = "/etc/dataone/node.properties";
 			Settings.augmentConfiguration(nodeProperties);
-			String certificateLocation = Settings.getConfiguration().getString("D1Client.certificate.file");
+			String certificateDirectory = Settings.getConfiguration().getString("D1Client.certificate.directory");
+			String certificateFilename = Settings.getConfiguration().getString("D1Client.certificate.filename");
+			String certificateLocation = certificateDirectory + File.pathSeparator + certificateFilename;
 			CertificateManager.getInstance().setCertificateLocation(certificateLocation);
 			System.out.println("USING CN CERTIFICATE LOCATED HERE: " + certificateLocation);
 		} catch (Exception e) {
