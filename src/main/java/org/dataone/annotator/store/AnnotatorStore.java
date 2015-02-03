@@ -164,6 +164,7 @@ public class AnnotatorStore {
 			Settings.augmentConfiguration(nodeProperties);
 			String certificateLocation = Settings.getConfiguration().getString("D1Client.certificate.file");
 			CertificateManager.getInstance().setCertificateLocation(certificateLocation);
+			System.out.println("USING CN CERTIFICATE LOCATED HERE: " + certificateLocation);
 		} catch (Exception e) {
 			ServiceFailure sf = new ServiceFailure("000", e.getMessage());
 			sf.initCause(e);
