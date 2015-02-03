@@ -34,6 +34,7 @@ import org.dataone.portal.PortalCertificateManager;
 import org.dataone.portal.TokenGenerator;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.InvalidToken;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
@@ -155,6 +156,19 @@ public class AnnotatorStore {
 		// use this node for storing/retrieving annotations
 		//storageNode = D1Client.getMN(session);
 		storageNode = D1Client.getMN(nodeRef);
+		
+		// FIXME: for now, just use the CN certificate for everything
+		try {
+			session = null;
+			String nodeProperties = "/etc/dataone/node.properties";
+			Settings.augmentConfiguration(nodeProperties);
+			String certificateLocation = Settings.getConfiguration().getString("D1Client.certificate.file");
+			CertificateManager.getInstance().setCertificateLocation(certificateLocation);
+		} catch (Exception e) {
+			ServiceFailure sf = new ServiceFailure("000", e.getMessage());
+			sf.initCause(e);
+			throw sf;
+		}
 
 		
 	}
