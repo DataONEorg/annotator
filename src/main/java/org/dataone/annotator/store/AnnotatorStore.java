@@ -28,6 +28,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.dataone.client.auth.CertificateManager;
+import org.dataone.client.auth.ClientIdentityManager;
 import org.dataone.client.v2.MNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
@@ -129,13 +130,16 @@ public class AnnotatorStore {
 		
 		// FIXME: for now, just use the CN certificate for everything
 		try {
-			session = null;
 			String nodeProperties = "/etc/dataone/node.properties";
 			Settings.augmentConfiguration(nodeProperties);
 			String certificateDirectory = Settings.getConfiguration().getString("D1Client.certificate.directory");
 			String certificateFilename = Settings.getConfiguration().getString("D1Client.certificate.filename");
 			String certificateLocation = certificateDirectory + File.separator + certificateFilename;
 			CertificateManager.getInstance().setCertificateLocation(certificateLocation);
+			Subject subject =  ClientIdentityManager.getCurrentIdentity();
+			//session = null;
+			session = new Session();
+			session.setSubject(subject);
 			System.out.println("USING CN CERTIFICATE LOCATED HERE: " + certificateLocation);
 		} catch (Exception e) {
 			ServiceFailure sf = new ServiceFailure("000", e.getMessage());
