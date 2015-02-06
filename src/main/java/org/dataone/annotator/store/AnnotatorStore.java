@@ -129,23 +129,22 @@ public class AnnotatorStore {
 		}
 		
 		// FIXME: for now, just use the CN certificate for everything
-		try {
-			String nodeProperties = "/etc/dataone/node.properties";
-			Settings.augmentConfiguration(nodeProperties);
-			String certificateDirectory = Settings.getConfiguration().getString("D1Client.certificate.directory");
-			String certificateFilename = Settings.getConfiguration().getString("D1Client.certificate.filename");
-			String certificateLocation = certificateDirectory + File.separator + certificateFilename;
-			CertificateManager.getInstance().setCertificateLocation(certificateLocation);
-			Subject subject =  ClientIdentityManager.getCurrentIdentity();
-			//session = null;
-			session = new Session();
-			session.setSubject(subject);
-			System.out.println("USING CN CERTIFICATE LOCATED HERE: " + certificateLocation);
-		} catch (Exception e) {
-			ServiceFailure sf = new ServiceFailure("000", e.getMessage());
-			sf.initCause(e);
-			throw sf;
-		}
+//		try {
+//			String nodeProperties = "/etc/dataone/node.properties";
+//			Settings.augmentConfiguration(nodeProperties);
+//			String certificateDirectory = Settings.getConfiguration().getString("D1Client.certificate.directory");
+//			String certificateFilename = Settings.getConfiguration().getString("D1Client.certificate.filename");
+//			String certificateLocation = certificateDirectory + File.separator + certificateFilename;
+//			CertificateManager.getInstance().setCertificateLocation(certificateLocation);
+//			Subject subject =  ClientIdentityManager.getCurrentIdentity();
+//			session = new Session();
+//			session.setSubject(subject);
+//			System.out.println("USING CN CERTIFICATE LOCATED HERE: " + certificateLocation);
+//		} catch (Exception e) {
+//			ServiceFailure sf = new ServiceFailure("000", e.getMessage());
+//			sf.initCause(e);
+//			throw sf;
+//		}
 		
 		// NOTE: if session is null at this point, we are default to whatever CertificateManager has
 		// which may not be the original user from the web
