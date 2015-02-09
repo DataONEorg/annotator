@@ -349,8 +349,9 @@ public class AnnotatorStore {
 		Identifier sid = new Identifier();
 		sid.setValue(id);
 		
-		//storageNode.archive(session, sid);
-		storageNode.delete(session, sid);
+		storageNode.archive(session, sid);
+		//TODO: allow deletes by anyone, not just the node admin
+		//storageNode.delete(session, sid);
 
 
 	}
