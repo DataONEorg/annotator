@@ -244,7 +244,7 @@ public class AnnotatorRestServlet extends HttpServlet {
 		}
 		
         String resource = this.getResource(request);
-        if (resource.equals("annotations/")) {
+        if (resource.startsWith("annotations/")) {
         	try {
         		
             	String id = request.getPathInfo().substring(request.getPathInfo().lastIndexOf("/") + 1);
