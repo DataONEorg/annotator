@@ -302,12 +302,14 @@ public class AnnotatorStore {
 		// we really just use SID to mke it look like an update to the same identifier
 		
 		// use the dataone API to update the annotation
-		Identifier sid = new Identifier();
-		sid.setValue(id);
+		Identifier givenIdentifier = new Identifier();
+		givenIdentifier.setValue(id);
 		
-		// get the original pid
-		Identifier originalPid = storageNode.getSystemMetadata(session, sid).getIdentifier();
-		
+		// get the original pid and sid
+		SystemMetadata originalSystemMetadata = storageNode.getSystemMetadata(session, givenIdentifier);
+		Identifier originalPid = originalSystemMetadata.getIdentifier();
+		Identifier sid = originalSystemMetadata.getSeriesId();
+
 		// create identifier for the new revision
 		Identifier pid = storageNode.generateIdentifier(session, "UUID", "annotation");
 				
