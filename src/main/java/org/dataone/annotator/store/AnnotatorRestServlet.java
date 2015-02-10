@@ -235,6 +235,40 @@ public class AnnotatorRestServlet extends HttpServlet {
     protected void doPut(HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
         logMetacat.debug("HTTP Verb: PUT");
+        
+        AnnotatorStore as = null;
+		try {
+			as = new AnnotatorStore(request);
+		} catch (BaseException e) {
+			throw new ServletException(e);
+		}
+		
+        String resource = this.getResource(request);
+        if (resource.equals("annotations/")) {
+        	try {
+        		
+            	String id = request.getPathInfo().substring(request.getPathInfo().lastIndexOf("/") + 1);
+
+        		// get the annotation from the request
+        		InputStream is = request.getInputStream();
+    			JSONObject annotation = (JSONObject) JSONValue.parse(is);
+    			
+    			// update it on the node
+				JSONObject result = as.update(id, annotation);
+								
+				// redirect to read
+				response.setStatus(303);
+				response.sendRedirect(request.getRequestURI() + "/" + id);
+				
+				// write it back in the response
+				result.writeJSONString(response.getWriter());
+				
+			} catch (Exception e) {
+				throw new ServletException(e);
+			}
+        }
+        	
+        
     }
 
     /** Handle "HEAD" method requests from HTTP clients */
