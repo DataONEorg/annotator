@@ -183,13 +183,17 @@ public class AnnotatorRestServlet extends HttpServlet {
 				
 				// TODO: determine which is the correct approach for responding to CREATE
 				
-				// redirect to read
-				response.setStatus(303);
-				response.sendRedirect(request.getRequestURI() + "/" + id);
-				
-				// write it back in the response
-				JSONObject result = as.read(id);
-				result.writeJSONString(response.getWriter());
+				// redirect to read?
+				// see: http://docs.annotatorjs.org/en/v1.2.x/storage.html
+				boolean redirect = false;
+				if (redirect) {
+					response.setStatus(303);
+					response.sendRedirect(request.getRequestURI() + "/" + id);
+				} else {
+					response.setStatus(200);
+					// write it back in the response
+					annotation.writeJSONString(response.getWriter());
+				}
 				
 			} catch (Exception e) {
 				throw new ServletException(e);
@@ -256,12 +260,19 @@ public class AnnotatorRestServlet extends HttpServlet {
     			// update it on the node
 				JSONObject result = as.update(id, annotation);
 								
-				// redirect to read
-				response.setStatus(303);
-				response.sendRedirect(request.getRequestURI() + "/" + id);
+				// redirect to read?
+				// see: http://docs.annotatorjs.org/en/v1.2.x/storage.html
+				boolean redirect = false;
+				if (redirect) {
+					response.setStatus(303);
+					response.sendRedirect(request.getRequestURI() + "/" + id);
+				} else {
+					response.setStatus(200);
+					// write it back in the response
+					result.writeJSONString(response.getWriter());
+				}
 				
-				// write it back in the response
-				result.writeJSONString(response.getWriter());
+				
 				
 			} catch (Exception e) {
 				throw new ServletException(e);
