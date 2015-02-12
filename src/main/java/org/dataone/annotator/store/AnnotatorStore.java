@@ -258,8 +258,7 @@ public class AnnotatorStore {
 		Identifier sid = storageNode.generateIdentifier(session, "UUID", "annotation");
 		
 		// add properties to the annotation
-		// TODO: use SID for the identifier when implemented
-		annotation.put("id", pid.getValue());
+		annotation.put("id", sid.getValue());
 		annotation.put("user", session.getSubject().getValue());
 		Date now = Calendar.getInstance().getTime();
 		annotation.put("created", DateTimeMarshaller.serializeDateToUTC(now));
