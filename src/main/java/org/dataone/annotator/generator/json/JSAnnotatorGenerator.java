@@ -158,10 +158,31 @@ public class JSAnnotatorGenerator extends AnnotationGenerator {
 						// for selecting particular part of the metadata
 						String xpointer = "#xpointer(/eml/dataset/dataTable[" + entityCount + "]/attributeList/attribute[" + attributeCount + "])";
 				    	
-				    	annotation.put("field", "annotation_sm");
+				    	annotation.put("field", "sem_annotation");
 				    	annotation.put("resource", xpointer);
 				    	annotation.put("quote", attributeName);
+				    	annotation.put("oa:Motivation", "oa:tagging");
+				    	
+				    	// target a (hopefully stable) div for the highlight
+				    	// here's an example for attributeName
+				    	//"ranges":[
+				    		//{
+				    		//"endOffset":8,
+				    		//"start":"\/\/*[@id='attributeName_6']\/div[1]",
+				    		//"end":"\/\/*[@id='attributeName_6']\/div[1]",
+				    		//"startOffset":0}
+						//]
 						
+				    	// the range for the highlighted text
+				    	JSONObject range = new JSONObject();
+				    	range.put("start", "//*[@id='attibuteName_" + attributeCount + "']/div[1]");
+				    	range.put("end", "//*[@id='attibuteName_" + attributeCount + "']/div[1]");
+				    	range.put("startOffset", 0);
+				    	range.put("endOffset", attributeName.length());
+				    	JSONArray ranges = new JSONArray();
+				    	ranges.add(range);
+						annotation.put("ranges", ranges);
+				    			
 						// look up concepts for all the attribute text we have
 						// TODO: refine this for better matching
 						List<ConceptItem> concepts = conceptMatcher.getConcepts(attributeText.toString());
@@ -214,6 +235,17 @@ public class JSAnnotatorGenerator extends AnnotationGenerator {
 		    	annotation.put("field", "orcid_sm");
 		    	annotation.put("resource", xpointer);
 		    	annotation.put("quote", creators.get(0).getSurName());
+		    	annotation.put("oa:Motivation", "prov:wasAttributedTo");
+		    	
+		    	// the range for the highlighted text
+		    	JSONObject range = new JSONObject();
+		    	range.put("start", "//*[@id='origin_" + 1 + "']/div[1]");
+		    	range.put("end", "//*[@id='origin_" + 1 + "']/div[1]");
+		    	range.put("startOffset", 0);
+		    	range.put("endOffset", creators.get(0).getSurName().length());
+		    	JSONArray ranges = new JSONArray();
+		    	ranges.add(range);
+				annotation.put("ranges", ranges);
 		    	
 		    	StringWriter sw = new StringWriter();
 				annotation.writeJSONString(sw);
