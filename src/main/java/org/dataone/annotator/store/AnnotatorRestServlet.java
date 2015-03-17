@@ -24,7 +24,9 @@ package org.dataone.annotator.store;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
+import java.util.Enumeration;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -37,11 +39,15 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.JSONValue;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.client.auth.CertificateManager;
 import org.dataone.portal.PortalCertificateManager;
 import org.dataone.portal.TokenGenerator;
 import org.dataone.service.exceptions.BaseException;
+import org.dataone.service.exceptions.InvalidToken;
+import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
 
 /**
@@ -51,7 +57,95 @@ import org.dataone.service.types.v1.SubjectInfo;
  */
 public class AnnotatorRestServlet extends HttpServlet {
 
-    protected Logger logMetacat;
+    public static Log log = LogFactory.getLog(AnnotatorRestServlet.class);
+    
+    public static Session getSession(HttpServletRequest request) throws BaseException {
+		
+		log.debug("Inspecting request for session information");
+	
+		Session session = null;
+				
+		// look for certificate-based session (d1 default) 
+		try {
+			session = CertificateManager.getInstance().getSession(request);
+			log.debug("Session from original request: " + session);
+
+		} catch (InvalidToken e) {
+			log.warn(e.getMessage(), e);
+		}
+		
+		// try getting it from the token (annotator library)
+		if (session == null) {
+			debugHeaders(request);
+			String token = request.getHeader("x-annotator-auth-token");
+			session = TokenGenerator.getSession(token);
+			log.debug("Session from x-annotator-auth-token: " + session);
+		}
+		
+		// see if we can proxy as the user
+		if (session != null) {
+			try {
+				
+				log.warn("looking up certificate from portal");
+				
+				// register the portal certificate with the certificate manager for the calling subject
+				X509Certificate certificate = PortalCertificateManager.getInstance().getCertificate(request);
+				PrivateKey key = PortalCertificateManager.getInstance().getPrivateKey(request);
+				String certSubject = CertificateManager.getInstance().getSubjectDN(certificate);
+				String sessionSubject = session.getSubject().getValue();
+
+				// TODO: verify that the users are the same
+				log.warn("Certifcate subject: " + certSubject);
+				log.warn("Session subject: " + sessionSubject);
+
+				// now the methods will "know" who is calling them - used in conjunction with Certificate Manager
+				CertificateManager.getInstance().registerCertificate(certSubject , certificate, key);
+				log.warn("Registered portal certificate for: " + certSubject);
+
+				session = new Session();
+				Subject subject = new Subject();
+				subject.setValue(certSubject);
+				session.setSubject(subject);
+				
+			} catch (Exception e) {
+				log.error("cound not register user session from portal: " + e.getMessage(), e);
+			}
+		}
+		
+		// FIXME: for now, just use the CN certificate for everything
+//		try {
+//			String nodeProperties = "/etc/dataone/node.properties";
+//			Settings.augmentConfiguration(nodeProperties);
+//			String certificateDirectory = Settings.getConfiguration().getString("D1Client.certificate.directory");
+//			String certificateFilename = Settings.getConfiguration().getString("D1Client.certificate.filename");
+//			String certificateLocation = certificateDirectory + File.separator + certificateFilename;
+//			CertificateManager.getInstance().setCertificateLocation(certificateLocation);
+//			Subject subject =  ClientIdentityManager.getCurrentIdentity();
+//			session = new Session();
+//			session.setSubject(subject);
+//			System.out.println("USING CN CERTIFICATE LOCATED HERE: " + certificateLocation);
+//		} catch (Exception e) {
+//			ServiceFailure sf = new ServiceFailure("000", e.getMessage());
+//			sf.initCause(e);
+//			throw sf;
+//		}
+		
+		// NOTE: if session is null at this point, we are default to whatever CertificateManager has
+		// which may not be the original user from the web
+
+		return session;
+	}
+    
+    private static void debugHeaders(HttpServletRequest request) {
+		Enumeration<String> headers = request.getHeaderNames();
+		while (headers.hasMoreElements()) {
+			String name = (String) headers.nextElement();
+			String value = request.getHeader(name);
+			log.debug("Header: " + name + "=" + value);
+			System.out.println("Header: " + name + "=" + value);
+
+		}
+	}
     
     private String getResource(HttpServletRequest request) {
     	// get the resource
@@ -65,7 +159,6 @@ public class AnnotatorRestServlet extends HttpServlet {
      */
     @Override
     public void init(ServletConfig config) throws ServletException {
-        logMetacat = Logger.getLogger(this.getClass());
         super.init(config);
     }
 
@@ -73,12 +166,12 @@ public class AnnotatorRestServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
-        logMetacat.debug("HTTP Verb: GET");
+        log.debug("HTTP Verb: GET");
         String resource = this.getResource(request);
         
     	AnnotatorStore as = null;
 		try {
-			as = new AnnotatorStore(request);
+			as = new AnnotatorStore(getSession(request));
 		} catch (BaseException e) {
 			throw new ServletException(e);
 		}
@@ -162,11 +255,11 @@ public class AnnotatorRestServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
-        logMetacat.debug("HTTP Verb: POST");
+        log.debug("HTTP Verb: POST");
 
         AnnotatorStore as = null;
 		try {
-			as = new AnnotatorStore(request);
+			as = new AnnotatorStore(getSession(request));
 		} catch (BaseException e) {
 			throw new ServletException(e);
 		}
@@ -206,11 +299,11 @@ public class AnnotatorRestServlet extends HttpServlet {
     @Override
     protected void doDelete(HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
-        logMetacat.debug("HTTP Verb: DELETE");
+        log.debug("HTTP Verb: DELETE");
         
         AnnotatorStore as = null;
 		try {
-			as = new AnnotatorStore(request);
+			as = new AnnotatorStore(getSession(request));
 		} catch (BaseException e) {
 			throw new ServletException(e);
 		}
@@ -238,11 +331,11 @@ public class AnnotatorRestServlet extends HttpServlet {
     @Override
     protected void doPut(HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
-        logMetacat.debug("HTTP Verb: PUT");
+        log.debug("HTTP Verb: PUT");
         
         AnnotatorStore as = null;
 		try {
-			as = new AnnotatorStore(request);
+			as = new AnnotatorStore(getSession(request));
 		} catch (BaseException e) {
 			throw new ServletException(e);
 		}
@@ -286,6 +379,6 @@ public class AnnotatorRestServlet extends HttpServlet {
     @Override
     protected void doHead(HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
-        logMetacat.debug("HTTP Verb: HEAD");
+        log.debug("HTTP Verb: HEAD");
     }
 }

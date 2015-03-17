@@ -61,10 +61,9 @@ public class AnnotatorStoreIT  {
 	@Test
 	public void testRoundTrip() {
 		try {
-			
-			
+						
 			// read the test annotation for CRUD operations
-			AnnotatorStore as = new AnnotatorStore(request);
+			AnnotatorStore as = new AnnotatorStore(AnnotatorRestServlet.getSession(request));
 			InputStream is = this.getClass().getResourceAsStream(ANNOTATION_TEST_DOC);
 			JSONObject annotation = (JSONObject) JSONValue.parse(is);
 			String id = as.create(annotation);

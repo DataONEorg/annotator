@@ -4,21 +4,19 @@
 package org.dataone.annotator.store;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
-import java.security.PrivateKey;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.servlet.http.HttpServletRequest;
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
@@ -27,16 +25,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
-import org.dataone.client.auth.CertificateManager;
-import org.dataone.client.auth.ClientIdentityManager;
 import org.dataone.client.v2.MNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
-import org.dataone.portal.PortalCertificateManager;
-import org.dataone.portal.TokenGenerator;
 import org.dataone.service.exceptions.BaseException;
-import org.dataone.service.exceptions.InvalidToken;
-import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
@@ -56,11 +48,6 @@ import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.Constants;
 import org.dataone.service.util.DateTimeMarshaller;
 
-
-import net.minidev.json.JSONArray;
-import net.minidev.json.JSONObject;
-import net.minidev.json.JSONValue;
-
 /**
  * @author leinfelder
  *
@@ -77,77 +64,10 @@ public class AnnotatorStore {
 
 	private Session session;
 	
-	public AnnotatorStore(HttpServletRequest request) throws BaseException {
+	public AnnotatorStore(Session session) throws BaseException {
 		
-		log.debug("Inspecting request for session information");
-		
-		// look for certificate-based session (d1 default) 
-		try {
-			session = CertificateManager.getInstance().getSession(request);
-			log.debug("Session from original request: " + session);
-
-		} catch (InvalidToken e) {
-			log.warn(e.getMessage(), e);
-		}
-		
-		// try getting it from the token (annotator library)
-		if (session == null) {
-			debugHeaders(request);
-			String token = request.getHeader("x-annotator-auth-token");
-			session = TokenGenerator.getSession(token);
-			log.debug("Session from x-annotator-auth-token: " + session);
-		}
-		
-		// see if we can proxy as the user
-		if (session != null) {
-			try {
-				
-				log.warn("looking up certificate from portal");
-				
-				// register the portal certificate with the certificate manager for the calling subject
-				X509Certificate certificate = PortalCertificateManager.getInstance().getCertificate(request);
-				PrivateKey key = PortalCertificateManager.getInstance().getPrivateKey(request);
-				String certSubject = CertificateManager.getInstance().getSubjectDN(certificate);
-				String sessionSubject = session.getSubject().getValue();
-
-				// TODO: verify that the users are the same
-				log.warn("Certifcate subject: " + certSubject);
-				log.warn("Session subject: " + sessionSubject);
-
-				// now the methods will "know" who is calling them - used in conjunction with Certificate Manager
-				CertificateManager.getInstance().registerCertificate(certSubject , certificate, key);
-				log.warn("Registered portal certificate for: " + certSubject);
-
-				session = new Session();
-				Subject subject = new Subject();
-				subject.setValue(certSubject);
-				session.setSubject(subject);
-				
-			} catch (Exception e) {
-				log.error("cound not register user session from portal: " + e.getMessage(), e);
-			}
-		}
-		
-		// FIXME: for now, just use the CN certificate for everything
-//		try {
-//			String nodeProperties = "/etc/dataone/node.properties";
-//			Settings.augmentConfiguration(nodeProperties);
-//			String certificateDirectory = Settings.getConfiguration().getString("D1Client.certificate.directory");
-//			String certificateFilename = Settings.getConfiguration().getString("D1Client.certificate.filename");
-//			String certificateLocation = certificateDirectory + File.separator + certificateFilename;
-//			CertificateManager.getInstance().setCertificateLocation(certificateLocation);
-//			Subject subject =  ClientIdentityManager.getCurrentIdentity();
-//			session = new Session();
-//			session.setSubject(subject);
-//			System.out.println("USING CN CERTIFICATE LOCATED HERE: " + certificateLocation);
-//		} catch (Exception e) {
-//			ServiceFailure sf = new ServiceFailure("000", e.getMessage());
-//			sf.initCause(e);
-//			throw sf;
-//		}
-		
-		// NOTE: if session is null at this point, we are default to whatever CertificateManager has
-		// which may not be the original user from the web
+		// use the session that is passed in, assume the certificate configuration has been completed
+		this.session = session;
 		
 		// use configured node ref
 		NodeReference nodeRef = null;
@@ -178,17 +98,6 @@ public class AnnotatorStore {
 		storageNode = D1Client.getMN(nodeRef);
 		
 		
-	}
-	
-	private void debugHeaders(HttpServletRequest request) {
-		Enumeration<String> headers = request.getHeaderNames();
-		while (headers.hasMoreElements()) {
-			String name = (String) headers.nextElement();
-			String value = request.getHeader(name);
-			log.debug("Header: " + name + "=" + value);
-			System.out.println("Header: " + name + "=" + value);
-
-		}
 	}
 	
 	/**
