@@ -33,9 +33,9 @@ import org.ecoinformatics.datamanager.parser.Party;
 import org.ecoinformatics.datamanager.parser.generic.DataPackageParserInterface;
 import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
 
-public class JSAnnotatorGenerator extends AnnotationGenerator {
+public class JsonAnnotatorGenerator extends AnnotationGenerator {
 
-	private static Log log = LogFactory.getLog(JSAnnotatorGenerator.class);
+	private static Log log = LogFactory.getLog(JsonAnnotatorGenerator.class);
 	
 	private ConceptMatcher conceptMatcher;
 	
@@ -45,7 +45,7 @@ public class JSAnnotatorGenerator extends AnnotationGenerator {
 	/**
 	 * Constructor initializes the
 	 */
-	public JSAnnotatorGenerator() {
+	public JsonAnnotatorGenerator() {
 		super();
 		
 		// initialize the concept matcher impl we will use
@@ -284,13 +284,13 @@ public class JSAnnotatorGenerator extends AnnotationGenerator {
 
     	// get the values from solr
         String paramString = "?q=id:" + URLEncoder.encode("\"" + metadataPid.getValue() + "\"", "UTF-8") + "&fl=attribute,attributeName,origin,id" + "&wt=json";
-        System.out.println("paramString=" + paramString);
+        log.debug("paramString=" + paramString);
         
         InputStream solrStream = D1Client.getCN().query(null, "solr", paramString);
 	
         JSONParser jsonParser = new JSONParser();
         Object results = jsonParser.parse(solrStream);
-        System.out.println("results:" + results);
+        log.debug("results:" + results);
         JSONObject solrResults = (JSONObject) results;
         
         // get the first matching doc (should be only)
@@ -472,11 +472,11 @@ public class JSAnnotatorGenerator extends AnnotationGenerator {
 		Settings.getConfiguration().setProperty("D1Client.CN_URL", "https://cn-sandbox-2.test.dataone.org/cn");
 		Identifier metadataPid = new Identifier();
 		metadataPid.setValue("https://pasta.lternet.edu/package/metadata/eml/knb-lter-arc/20032/2");
-		JSAnnotatorGenerator ds = new JSAnnotatorGenerator();
+		JsonAnnotatorGenerator ds = new JsonAnnotatorGenerator();
 		Iterator<String> annotations = ds.generateAnnotations(metadataPid).values().iterator();
 		while (annotations.hasNext()) {
 			String jsonString = annotations.next();
-			System.out.println("JSON annotation: \n" + jsonString );
+			log.debug("JSON annotation: \n" + jsonString );
 		}
 		
 	}
