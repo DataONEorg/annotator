@@ -2,9 +2,11 @@ package org.dataone.annotator.matcher.esor;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
@@ -21,10 +23,10 @@ public class EsorService implements ConceptMatcher {
 
 	private static Log log = LogFactory.getLog(EsorService.class);
 
-	private static final String REST_URL = "http://127.0.0.1:9100/search";
+	//private static final String REST_URL = "http://127.0.0.1:9100/search";
 
 	//temporary server for testing
-	//private static final String REST_URL = "http://dataonetwc.tw.rpi.edu/linkipedia/search";
+	private static final String REST_URL = "http://dataonetwc.tw.rpi.edu/linkipedia/search";
 
 
 	@Override
@@ -40,7 +42,7 @@ public class EsorService implements ConceptMatcher {
 	private static List<ConceptItem> lookupEsor(QueryItem queryItem) throws Exception  {
 
 		HttpClient client = HttpClients.createDefault();
-		String uriStr = REST_URL + "?query=" + queryItem.toString();
+		String uriStr = REST_URL + "?query=" + URLEncoder.encode(queryItem.toString(), "UTF-8");
 		//System.out.println(uriStr);
 
 		HttpGet method = new HttpGet(uriStr);
@@ -51,13 +53,12 @@ public class EsorService implements ConceptMatcher {
 				throw new Exception("response code " + code + " for resource at " + uriStr);
 			}
 		InputStream body = response.getEntity().getContent();
-		String jsonStr = convertStreamToString(body);
-		//System.out.println(jsonStr);
+		String jsonStr = IOUtils.toString(body, "UTF-8");
+		System.out.println(jsonStr);
 
 		JSONObject json = new JSONObject(jsonStr);
 		String query = json.getString("query");
 		JSONArray results = json.getJSONArray("results");
-
 
 		//analysis the result and return
 		ArrayList<ConceptItem> concepts = new ArrayList<ConceptItem>();
@@ -65,17 +66,17 @@ public class EsorService implements ConceptMatcher {
 			JSONObject r = results.getJSONObject(i);
 			String url = r.getString("url");
 			String score = r.getString("score");
+			System.out.println("url=" + url + ", score=" + score);
 
-
+			// seems service can return blanks, guard against issues
+			if (url == null || url.length() == 0) {
+				continue;
+			}
+			
 			ConceptItem c = new ConceptItem(new URI(url.substring(1,url.length()-1)), Double.parseDouble(score));
 			concepts.add(c);
 		}
 
 		return concepts;
-	}
-
-	static String convertStreamToString(java.io.InputStream is) {
-		java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
-		return s.hasNext() ? s.next() : "";
 	}
 }

@@ -45,11 +45,12 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 	/**
 	 * Constructor initializes the
 	 */
-	public JsonAnnotatorGenerator() {
+	public JsonAnnotatorGenerator() throws Exception {
 		super();
 		
-		// initialize the concept matcher impl we will use
-		conceptMatcher = ConceptMatcherFactory.getMatcher(ConceptMatcherFactory.BIOPORTAL);
+		// initialize the concept matcher implementations we will use
+		String matcherClassName = Settings.getConfiguration().getString("annotator.matcher.className");
+		conceptMatcher = ConceptMatcherFactory.getMatcher(matcherClassName);
 		orcidMatcher = ConceptMatcherFactory.getMatcher(ConceptMatcherFactory.ORCID);
 
 	}
