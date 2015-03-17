@@ -3,7 +3,6 @@ package org.dataone.annotator.generator.json;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.net.URLEncoder;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -18,9 +17,6 @@ import net.minidev.json.parser.JSONParser;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.message.BasicNameValuePair;
 import org.dataone.annotator.generator.AnnotationGenerator;
 import org.dataone.annotator.matcher.ConceptItem;
 import org.dataone.annotator.matcher.ConceptMatcher;
@@ -116,7 +112,7 @@ public class JSAnnotatorGenerator extends AnnotationGenerator {
 	 * @return
 	 * @throws Exception
 	 */
-    public Map<Identifier, String> generateAnnotationsFromEML(Identifier metadataPid) throws Exception {
+    private Map<Identifier, String> generateAnnotationsFromEML(Identifier metadataPid) throws Exception {
     	
     	DataPackage dataPackage = this.getDataPackage(metadataPid);
     	
@@ -284,15 +280,10 @@ public class JSAnnotatorGenerator extends AnnotationGenerator {
      * @return
      * @throws Exception
      */
-    public Map<Identifier, String> generateAnnotationsFromIndex(Identifier metadataPid) throws Exception {
+    private Map<Identifier, String> generateAnnotationsFromIndex(Identifier metadataPid) throws Exception {
 
     	// get the values from solr
-    	List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new BasicNameValuePair("q", "id:" + escapeQueryChars(metadataPid.getValue()) + ""));
-        params.add(new BasicNameValuePair("fl", "attribute,attributeName,origin,id"));
-        params.add(new BasicNameValuePair("wt", "json"));
-        String paramString = "?" + URLEncodedUtils.format(params, "UTF-8");
-        paramString = "?q=id:" + URLEncoder.encode("\"" + metadataPid.getValue() + "\"", "UTF-8") + "&fl=attribute,attributeName,origin,id" + "&wt=json";
+        String paramString = "?q=id:" + URLEncoder.encode("\"" + metadataPid.getValue() + "\"", "UTF-8") + "&fl=attribute,attributeName,origin,id" + "&wt=json";
         System.out.println("paramString=" + paramString);
         
         InputStream solrStream = D1Client.getCN().query(null, "solr", paramString);
@@ -415,30 +406,6 @@ public class JSAnnotatorGenerator extends AnnotationGenerator {
 		return annotations;
 		
 	}
-    
-    /**
-     * Borrowed from
-     * http://www.docjar.com/html/api/org/apache/solr/client/solrj/
-     * util/ClientUtils.java.html
-     * 
-     * @param s
-     * @return
-     */
-    public static String escapeQueryChars(String s) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            // These characters are part of the query syntax and must be escaped
-            if (c == '\\' || c == '+' || c == '-' || c == '!' || c == '(' || c == ')' || c == ':'
-                    || c == '^' || c == '[' || c == ']' || c == '\"' || c == '{' || c == '}'
-                    || c == '~' || c == '*' || c == '?' || c == '|' || c == '&' || c == ';'
-                    || Character.isWhitespace(c)) {
-                sb.append('\\');
-            }
-            sb.append(c);
-        }
-        return sb.toString();
-    }
 	
 	private JSONObject createAnnotationTemplate(Identifier metadataPid) throws Exception {
 		
@@ -449,28 +416,27 @@ public class JSAnnotatorGenerator extends AnnotationGenerator {
     	
     	// each needs a unique ID
     	String uuid = UUID.randomUUID().toString();
-		String annotationUri = "http://annotation/" + metadataPid.getValue() + uuid ;
 		Identifier annotationPid = new Identifier();
-		annotationPid.setValue(annotationUri);
+		annotationPid.setValue(uuid);
 		
     	annotation.put("id", annotationPid.getValue());
     	annotation.put("pid", metadataPid.getValue());
-    	annotation.put("uri", Settings.getConfiguration().getProperty("D1Client.CN_URL") + "/v1/resolve/" + metadataPid.getValue());
+    	annotation.put("uri", Settings.getConfiguration().getProperty("D1Client.CN_URL") + "/v2/resolve/" + metadataPid.getValue());
     	annotation.put("consumer", Settings.getConfiguration().getProperty("annotator.consumerKey"));
     	
     	// TODO: transfer all permissions from sysmeta
     	JSONObject permissions = (JSONObject) JSONValue.parse(
     			"{" +
-    				"\"update\": [" +
-    					sysMeta.getRightsHolder().toString()
-    				+ "], " +
+    				"\"update\": [\"" +
+    					sysMeta.getRightsHolder().getValue()
+    				+ "\"], " +
     				"\"read\": [\"group:__world__\"], " +
-    		        "\"delete\": [" +
-    		        	sysMeta.getRightsHolder().toString()
-    		        + "], " +
-    		        "\"admin\": [" +
-    		        	sysMeta.getRightsHolder().toString()
-    		        + "]" +
+    		        "\"delete\": [\"" +
+    		        	sysMeta.getRightsHolder().getValue()
+    		        + "\"], " +
+    		        "\"admin\": [\"" +
+    		        	sysMeta.getRightsHolder().getValue()
+    		        + "\"]" +
     		     "}"
     			);
 		annotation.put("permissions", permissions);
@@ -504,7 +470,7 @@ public class JSAnnotatorGenerator extends AnnotationGenerator {
 	public static void testGenerate() throws Exception {
 		Settings.getConfiguration().setProperty("D1Client.CN_URL", "https://cn-sandbox-2.test.dataone.org/cn");
 		Identifier metadataPid = new Identifier();
-		metadataPid.setValue("https://pasta.lternet.edu/package/metadata/eml/knb-lter-hfr/14/15");
+		metadataPid.setValue("https://pasta.lternet.edu/package/metadata/eml/knb-lter-arc/20032/2");
 		JSAnnotatorGenerator ds = new JSAnnotatorGenerator();
 		Iterator<String> annotations = ds.generateAnnotations(metadataPid).values().iterator();
 		while (annotations.hasNext()) {
