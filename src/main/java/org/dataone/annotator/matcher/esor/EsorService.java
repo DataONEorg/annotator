@@ -23,6 +23,9 @@ public class EsorService implements ConceptMatcher {
 
 	private static final String REST_URL = "http://127.0.0.1:9100/search";
 
+	//temporary server for testing
+	//private static final String REST_URL = "http://dataonetwc.tw.rpi.edu/linkipedia/search";
+
 
 	@Override
 	public List<ConceptItem> getConcepts(String fullText) throws Exception {
