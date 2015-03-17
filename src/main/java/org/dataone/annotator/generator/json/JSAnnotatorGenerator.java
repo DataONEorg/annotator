@@ -444,8 +444,9 @@ public class JSAnnotatorGenerator extends AnnotationGenerator {
 		annotation.put("created", now);
 		annotation.put("updated", now);
 		//TODO: who is considered the automated user?
-		annotation.put("user", Settings.getConfiguration().getProperty("cn.nodeSubject"));
-		
+		//annotation.put("user", Settings.getConfiguration().getProperty("cn.nodeSubject"));
+		annotation.put("user", sysMeta.getRightsHolder().getValue());
+
 		return annotation;
 	}
 	
