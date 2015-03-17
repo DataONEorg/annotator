@@ -2,8 +2,11 @@ package org.dataone.annotator.generator.json;
 
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -11,9 +14,13 @@ import java.util.UUID;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.JSONValue;
+import net.minidev.json.parser.JSONParser;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
 import org.dataone.annotator.generator.AnnotationGenerator;
 import org.dataone.annotator.matcher.ConceptItem;
 import org.dataone.annotator.matcher.ConceptMatcher;
@@ -98,7 +105,18 @@ public class JSAnnotatorGenerator extends AnnotationGenerator {
     }
      */
 	@Override
-    public Map<Identifier, String> generateAnnotations(Identifier metadataPid) throws Exception {
+	 public Map<Identifier, String> generateAnnotations(Identifier metadataPid) throws Exception {
+		//return generateAnnotationsFromEML(metadataPid);
+		return generateAnnotationsFromIndex(metadataPid);
+	}
+	
+	/**
+	 * Generates annotations using EML Datamanager library for parsing
+	 * @param metadataPid
+	 * @return
+	 * @throws Exception
+	 */
+    public Map<Identifier, String> generateAnnotationsFromEML(Identifier metadataPid) throws Exception {
     	
     	DataPackage dataPackage = this.getDataPackage(metadataPid);
     	
@@ -259,6 +277,168 @@ public class JSAnnotatorGenerator extends AnnotationGenerator {
 		return annotations;
 		
 	}
+    
+    /**
+     * Generates annotations from SOLR index entry
+     * @param metadataPid
+     * @return
+     * @throws Exception
+     */
+    public Map<Identifier, String> generateAnnotationsFromIndex(Identifier metadataPid) throws Exception {
+
+    	// get the values from solr
+    	List<NameValuePair> params = new ArrayList<NameValuePair>();
+        params.add(new BasicNameValuePair("q", "id:" + escapeQueryChars(metadataPid.getValue()) + ""));
+        params.add(new BasicNameValuePair("fl", "attribute,attributeName,origin,id"));
+        params.add(new BasicNameValuePair("wt", "json"));
+        String paramString = "?" + URLEncodedUtils.format(params, "UTF-8");
+        paramString = "?q=id:" + URLEncoder.encode("\"" + metadataPid.getValue() + "\"", "UTF-8") + "&fl=attribute,attributeName,origin,id" + "&wt=json";
+        System.out.println("paramString=" + paramString);
+        
+        InputStream solrStream = D1Client.getCN().query(null, "solr", paramString);
+	
+        JSONParser jsonParser = new JSONParser();
+        Object results = jsonParser.parse(solrStream);
+        System.out.println("results:" + results);
+        JSONObject solrResults = (JSONObject) results;
+        
+        // get the first matching doc (should be only)
+        JSONObject solrDoc = (JSONObject) ((JSONArray)((JSONObject) solrResults.get("response")).get("docs")).get(0);
+    	 
+		Map<Identifier, String> annotations = new HashMap<Identifier, String>();
+		
+		// loop through the attributes
+		JSONArray attributeNames = (JSONArray) solrDoc.get("attributeName");
+		JSONArray fullAttributes = (JSONArray) solrDoc.get("attribute");
+
+		int attributeCount = 1;
+		if (fullAttributes != null) {
+			for (Object attribute: fullAttributes) {
+				
+				String attributeText = attribute.toString();
+				String attributeName = attributeNames.get(attributeCount - 1).toString();
+
+				log.debug("Attribute name: " + attributeName);
+				log.debug("Attribute text: " + attributeText);
+
+				// capture the annotation
+		    	JSONObject annotation = createAnnotationTemplate(metadataPid);
+		    	
+				// for selecting particular part of the metadata
+				String xpointer = "#xpointer(//attribute[" + attributeCount + "])";
+		    	
+		    	annotation.put("field", "sem_annotation");
+		    	annotation.put("resource", xpointer);
+		    	annotation.put("quote", attributeName);
+		    	annotation.put("oa:Motivation", "oa:tagging");
+		    	
+		    	// the range for the highlighted text
+		    	JSONObject range = new JSONObject();
+		    	range.put("start", "//*[@id='attibuteName_" + attributeCount + "']/div[1]");
+		    	range.put("end", "//*[@id='attibuteName_" + attributeCount + "']/div[1]");
+		    	range.put("startOffset", 0);
+		    	range.put("endOffset", attributeName.length());
+		    	JSONArray ranges = new JSONArray();
+		    	ranges.add(range);
+				annotation.put("ranges", ranges);
+		    			
+				// look up concepts for all the attribute text we have
+				List<ConceptItem> concepts = conceptMatcher.getConcepts(attributeText.toString());
+				if (concepts != null && concepts.size() > 0) {
+					// add the tags
+					JSONArray tags = new JSONArray();
+					for (ConceptItem conceptItem: concepts) {
+						tags.add(conceptItem.getUri().toString());
+					}
+					annotation.put("tags", tags);
+				} else {
+					// no annotation for things without tags
+					continue;
+				}
+				
+				// write the annotation out
+				StringWriter sw = new StringWriter();
+		    	annotation.writeJSONString(sw);
+				Identifier pid = new Identifier();
+				pid.setValue(annotation.get("id").toString());
+				annotations.put(pid, sw.toString());
+
+		    	// on to the next attribute
+				attributeCount++;
+				
+			}
+		}
+		
+		
+		// look up creators from the EML metadata for an attribution annotation
+		JSONArray creators = (JSONArray) solrDoc.get("origin");
+		if (creators != null && creators.size() > 0) {	
+			
+			String creator = creators.get(0).toString();
+			// use an orcid if we can find one from their system
+			String creatorText = creator;
+			List<ConceptItem> concepts = orcidMatcher.getConcepts(creatorText);
+			if (concepts != null) {
+				JSONObject annotation = createAnnotationTemplate(metadataPid);
+				JSONArray creatorTags = new JSONArray();
+				for (ConceptItem item: concepts) {
+					String orcidUri = item.getUri().toString();
+					creatorTags.add(orcidUri);
+				}
+				annotation.put("tags", creatorTags);
+				
+				String xpointer = "#xpointer(//origin[" + 1 + "])";
+		    	annotation.put("field", "orcid_sm");
+		    	annotation.put("resource", xpointer);
+		    	annotation.put("quote", creator);
+		    	annotation.put("oa:Motivation", "prov:wasAttributedTo");
+		    	
+		    	// the range for the highlighted text
+		    	JSONObject range = new JSONObject();
+		    	range.put("start", "//*[@id='origin_" + 1 + "']/div[1]");
+		    	range.put("end", "//*[@id='origin_" + 1 + "']/div[1]");
+		    	range.put("startOffset", 0);
+		    	range.put("endOffset", creator.length());
+		    	JSONArray ranges = new JSONArray();
+		    	ranges.add(range);
+				annotation.put("ranges", ranges);
+		    	
+		    	StringWriter sw = new StringWriter();
+				annotation.writeJSONString(sw);
+				Identifier pid = new Identifier();
+				pid.setValue(annotation.get("id").toString());
+				annotations.put(pid, sw.toString());
+			} 
+		}
+		
+		
+		return annotations;
+		
+	}
+    
+    /**
+     * Borrowed from
+     * http://www.docjar.com/html/api/org/apache/solr/client/solrj/
+     * util/ClientUtils.java.html
+     * 
+     * @param s
+     * @return
+     */
+    public static String escapeQueryChars(String s) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            // These characters are part of the query syntax and must be escaped
+            if (c == '\\' || c == '+' || c == '-' || c == '!' || c == '(' || c == ')' || c == ':'
+                    || c == '^' || c == '[' || c == ']' || c == '\"' || c == '{' || c == '}'
+                    || c == '~' || c == '*' || c == '?' || c == '|' || c == '&' || c == ';'
+                    || Character.isWhitespace(c)) {
+                sb.append('\\');
+            }
+            sb.append(c);
+        }
+        return sb.toString();
+    }
 	
 	private JSONObject createAnnotationTemplate(Identifier metadataPid) throws Exception {
 		
@@ -322,11 +502,15 @@ public class JSAnnotatorGenerator extends AnnotationGenerator {
 	}
 	
 	public static void testGenerate() throws Exception {
+		Settings.getConfiguration().setProperty("D1Client.CN_URL", "https://cn-sandbox-2.test.dataone.org/cn");
 		Identifier metadataPid = new Identifier();
-		metadataPid.setValue("tao.1.1");
+		metadataPid.setValue("https://pasta.lternet.edu/package/metadata/eml/knb-lter-hfr/14/15");
 		JSAnnotatorGenerator ds = new JSAnnotatorGenerator();
-		String jsonString = ds.generateAnnotations(metadataPid).values().iterator().next();
-		log.info("JSON annotation: \n" + jsonString);
+		Iterator<String> annotations = ds.generateAnnotations(metadataPid).values().iterator();
+		while (annotations.hasNext()) {
+			String jsonString = annotations.next();
+			System.out.println("JSON annotation: \n" + jsonString );
+		}
 		
 	}
 	
