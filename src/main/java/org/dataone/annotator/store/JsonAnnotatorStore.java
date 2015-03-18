@@ -6,6 +6,7 @@ package org.dataone.annotator.store;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -272,10 +273,19 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 	 */
 	@Override
 	public String search(String query) throws Exception {
+		return searchIndex(query);
+	}
+	
+	/**
+	 * A naive "search" that lists the objects, then filters them.
+	 * This is not an efficient search technique and should be avoided 
+	 * in favor of the solr-base search method
+	 * @deprecated
+	 */
+	public String searchList(String query) throws Exception {
 		
 		JSONObject results = new JSONObject();
 		
-		// TODO: better search algorithm!
 		String annotationsContent = this.index();
 		JSONArray annotations = (JSONArray) JSONValue.parse(annotationsContent);
 		
@@ -295,6 +305,69 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 		results.put("total", annotations.size());
 		results.put("rows", annotations);
 		
+		return results.toJSONString();
+	}
+	
+	
+	/**
+	 * A less naive search that filters the initial result with a solr query, then filters it 
+	 * again with any additional criteria that are not exposed in the solr index.
+	 * This is the preferred implementation
+	 * @param query
+	 * @return
+	 * @throws Exception
+	 */
+	private String searchIndex(String query) throws Exception {
+		
+		String solrQuery = "?q=formatId:\"" + URLEncoder.encode(ANNOTATION_FORMAT_ID, "UTF-8") + "\"";
+
+		// parse the query syntax
+		Collection<Predicate> predicates = new ArrayList<Predicate>();
+		List<NameValuePair> criteria = URLEncodedUtils.parse(query, Charset.forName(DEFAULT_ENCODING));
+		for (NameValuePair pair: criteria) {
+			// ignore these parameters for paging
+			if (pair.getName().equals("limit") || pair.getName().equals("offset")) {
+				continue;
+			}
+			// initial filter by the uri that is being annotated
+			if (pair.getName().equals("uri")) {
+				solrQuery += "+sem_annotates:\"" + URLEncoder.encode(pair.getValue(), "UTF-8") + "\"";
+			}
+			// add the criteria for further filtering after initial retrieval
+			predicates.add(new AnnotationPredicate(pair.getName(), pair.getValue()));
+		}
+		
+		//more solr options
+		solrQuery += "&fl=id,sem_annotates,sem_annotated_by&wt=json";
+		
+		// search the index
+		InputStream solrResultStream = storageNode.query(session, "solr", solrQuery);
+
+		JSONObject solrResults = (JSONObject) JSONValue.parse(solrResultStream);
+		
+		JSONArray annotations = new JSONArray();
+
+		if (solrResults != null && solrResults.containsKey("response")) {
+			JSONArray solrDocs = (JSONArray)((JSONObject) solrResults.get("response")).get("docs");
+			
+			for (Object solrDoc: solrDocs) {
+				String id = ((JSONObject) solrDoc).get("id").toString();
+				
+				String annotationContent = this.read(id);
+				JSONObject annotation = (JSONObject) JSONValue.parse(annotationContent);
+				annotations.add(annotation);
+			}
+		}
+		
+		// apply additional filters for fields that may not be in the solr index
+		JSONObject results = new JSONObject();
+		
+		Predicate allPredicate = PredicateUtils.allPredicate(predicates);
+		CollectionUtils.filter(annotations, allPredicate);
+		
+		results.put("total", annotations.size());
+		results.put("rows", annotations);
+
 		return results.toJSONString();
 	}
 
