@@ -68,7 +68,6 @@ public class EsorService implements ConceptMatcher {
 			String score = r.getString("score");
 			System.out.println("url=" + url + ", score=" + score);
 
-<<<<<<< HEAD
 			//returned result may be empty
 			if(url.length()>0) {
 				ConceptItem c = new ConceptItem(new URI(url.substring(1, url.length() - 1)), Double.parseDouble(score));
@@ -76,15 +75,7 @@ public class EsorService implements ConceptMatcher {
 			}else{
 				System.out.println("NA");
 			}
-=======
-			// seems service can return blanks, guard against issues
-			if (url == null || url.length() == 0) {
-				continue;
-			}
 			
-			ConceptItem c = new ConceptItem(new URI(url.substring(1,url.length()-1)), Double.parseDouble(score));
-			concepts.add(c);
->>>>>>> 2d936c002aaf942e8645cc55855405c22c2313ee
 		}
 
 		return concepts;
