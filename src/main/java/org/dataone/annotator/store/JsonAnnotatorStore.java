@@ -329,11 +329,20 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 			if (pair.getName().equals("limit") || pair.getName().equals("offset")) {
 				continue;
 			}
-			// initial filter by the uri that is being annotated
+			// initial filter by the uri that is being annotated - use only the identifier portion
 			if (pair.getName().equals("uri")) {
 				String pid = pair.getValue();
-				//need better substringing to handle pids with slashes in them
-				pid = pid.substring(pid.lastIndexOf("/") + 1);
+				
+				// substring to find pid, assume either resolve or object endpoint is used
+				String resolveToken =  "/" + Constants.RESOURCE_RESOLVE + "/";
+				String objectToken =  "/" + Constants.RESOURCE_OBJECTS + "/";
+				if (pid.contains(resolveToken)) {
+					pid = pid.split(resolveToken)[1];
+				} else if (pid.contains(objectToken)) {
+					pid = pid.split(objectToken)[1];
+				} else {
+					// Do nothing: not sure what format it is in
+				}
 				
 				solrQuery += URLEncoder.encode("+sem_annotates:\"" + pid + "\"", "UTF-8");
 			}
