@@ -52,8 +52,6 @@ public abstract class AnnotationGenerator {
 		}
 	}
 	
-	public Map<Identifier, String> generateAnnotations(Identifier id) throws Exception {
-		return null;
-	}
+	public abstract Map<Identifier, String> generateAnnotations(Identifier id) throws Exception;
 
 }

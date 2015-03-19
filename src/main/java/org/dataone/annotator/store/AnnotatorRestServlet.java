@@ -35,10 +35,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import net.minidev.json.JSONArray;
-import net.minidev.json.JSONObject;
-import net.minidev.json.JSONValue;
-
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.client.auth.CertificateManager;
@@ -123,7 +120,6 @@ public class AnnotatorRestServlet extends HttpServlet {
 //			Subject subject =  ClientIdentityManager.getCurrentIdentity();
 //			session = new Session();
 //			session.setSubject(subject);
-//			System.out.println("USING CN CERTIFICATE LOCATED HERE: " + certificateLocation);
 //		} catch (Exception e) {
 //			ServiceFailure sf = new ServiceFailure("000", e.getMessage());
 //			sf.initCause(e);
@@ -142,7 +138,7 @@ public class AnnotatorRestServlet extends HttpServlet {
 			String name = (String) headers.nextElement();
 			String value = request.getHeader(name);
 			log.debug("Header: " + name + "=" + value);
-			System.out.println("Header: " + name + "=" + value);
+			//System.out.println("Header: " + name + "=" + value);
 
 		}
 	}
@@ -171,7 +167,7 @@ public class AnnotatorRestServlet extends HttpServlet {
         
     	AnnotatorStore as = null;
 		try {
-			as = new AnnotatorStore(getSession(request));
+			as = new JsonAnnotatorStore(getSession(request));
 		} catch (BaseException e) {
 			throw new ServletException(e);
 		}
@@ -180,8 +176,8 @@ public class AnnotatorRestServlet extends HttpServlet {
         if (resource.startsWith("annotations/")) {
         	String id = request.getPathInfo().substring(request.getPathInfo().lastIndexOf("/") + 1);
         	try {
-				JSONObject annotation = as.read(id);
-				annotation.writeJSONString(response.getWriter());
+				String result = as.read(id);
+				IOUtils.write(result, response.getOutputStream());
 				return;
 			} catch (Exception e) {
 				throw new ServletException(e);
@@ -192,8 +188,8 @@ public class AnnotatorRestServlet extends HttpServlet {
         // handle listing them
         if (resource.startsWith("annotations")) {
         	try {
-				JSONArray annotations = as.index();
-				annotations.writeJSONString(response.getWriter());
+				String result = as.index();
+				IOUtils.write(result, response.getOutputStream());
 				return;
 			} catch (Exception e) {
 				throw new ServletException(e);
@@ -205,8 +201,8 @@ public class AnnotatorRestServlet extends HttpServlet {
         if (resource.startsWith("search")) {
         	String query = request.getQueryString();
         	try {
-				JSONObject results = as.search(query);
-				results.writeJSONString(response.getWriter());
+				String result = as.search(query);
+				IOUtils.write(result, response.getOutputStream());
 				return;
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -259,7 +255,7 @@ public class AnnotatorRestServlet extends HttpServlet {
 
         AnnotatorStore as = null;
 		try {
-			as = new AnnotatorStore(getSession(request));
+			as = new JsonAnnotatorStore(getSession(request));
 		} catch (BaseException e) {
 			throw new ServletException(e);
 		}
@@ -269,10 +265,11 @@ public class AnnotatorRestServlet extends HttpServlet {
         	try {
         		// get the annotation from the request
         		InputStream is = request.getInputStream();
-    			JSONObject annotation = (JSONObject) JSONValue.parse(is);
     			
+        		String annotationContent = IOUtils.toString(is, "UTF-8");
+        		
     			// create it on the node
-				String id = as.create(annotation);
+				String id = as.create(annotationContent);
 				
 				// TODO: determine which is the correct approach for responding to CREATE
 				
@@ -285,7 +282,7 @@ public class AnnotatorRestServlet extends HttpServlet {
 				} else {
 					response.setStatus(200);
 					// write it back in the response
-					annotation.writeJSONString(response.getWriter());
+					IOUtils.write(annotationContent, response.getOutputStream());
 				}
 				
 			} catch (Exception e) {
@@ -303,7 +300,7 @@ public class AnnotatorRestServlet extends HttpServlet {
         
         AnnotatorStore as = null;
 		try {
-			as = new AnnotatorStore(getSession(request));
+			as = new JsonAnnotatorStore(getSession(request));
 		} catch (BaseException e) {
 			throw new ServletException(e);
 		}
@@ -335,7 +332,7 @@ public class AnnotatorRestServlet extends HttpServlet {
         
         AnnotatorStore as = null;
 		try {
-			as = new AnnotatorStore(getSession(request));
+			as = new JsonAnnotatorStore(getSession(request));
 		} catch (BaseException e) {
 			throw new ServletException(e);
 		}
@@ -348,10 +345,9 @@ public class AnnotatorRestServlet extends HttpServlet {
 
         		// get the annotation from the request
         		InputStream is = request.getInputStream();
-    			JSONObject annotation = (JSONObject) JSONValue.parse(is);
     			
     			// update it on the node
-				JSONObject result = as.update(id, annotation);
+				String result = as.update(id, IOUtils.toString(is, "UTF-8"));
 								
 				// redirect to read?
 				// see: http://docs.annotatorjs.org/en/v1.2.x/storage.html
@@ -362,7 +358,7 @@ public class AnnotatorRestServlet extends HttpServlet {
 				} else {
 					response.setStatus(200);
 					// write it back in the response
-					result.writeJSONString(response.getWriter());
+					IOUtils.write(result, response.getOutputStream());
 				}
 				
 				

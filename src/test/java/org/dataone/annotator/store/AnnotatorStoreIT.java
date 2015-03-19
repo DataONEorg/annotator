@@ -63,13 +63,15 @@ public class AnnotatorStoreIT  {
 		try {
 						
 			// read the test annotation for CRUD operations
-			AnnotatorStore as = new AnnotatorStore(AnnotatorRestServlet.getSession(request));
+			AnnotatorStore as = new JsonAnnotatorStore(AnnotatorRestServlet.getSession(request));
 			InputStream is = this.getClass().getResourceAsStream(ANNOTATION_TEST_DOC);
 			JSONObject annotation = (JSONObject) JSONValue.parse(is);
-			String id = as.create(annotation);
+			
+			String id = as.create(annotation.toJSONString());
 			
 			// check the created
-			JSONObject originalAnnotation = as.read(id);
+			String originalAnnotationContent = as.read(id);
+			JSONObject originalAnnotation = (JSONObject) JSONValue.parse(originalAnnotationContent);
 			String text = "Original annotation content";
 			String originalText = originalAnnotation.get("text").toString();
 			assertEquals(text, originalText);
