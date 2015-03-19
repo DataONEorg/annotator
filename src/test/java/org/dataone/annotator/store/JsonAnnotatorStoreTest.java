@@ -10,9 +10,10 @@ public class JsonAnnotatorStoreTest {
 	public void testSearchIndex() {
 		try {
 			AnnotatorStore as = new JsonAnnotatorStore(null);
-			String query = "uri=https://pasta.lternet.edu/package/metadata/eml/knb-lter-hfr/14/15";
+			//String query = "uri=tao.1.6";
+			String query = "uri=http://localhost:8080/metacat/d1/mn/v1/object/tao.1.6";
 			String results = as.search(query);
-			System.out.println(results);
+			System.out.println("RESULTS = " + results);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());

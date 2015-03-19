@@ -21,7 +21,7 @@ public class AnnotationUploaderTest {
 		identifiers.add("https://pasta.lternet.edu/package/metadata/eml/knb-lter-arc/20032/2");
 	}
 	
-	@Test
+	//@Test
 	public void testProcess() {
 		try {
 			AnnotationUploader uploader = new AnnotationUploader();

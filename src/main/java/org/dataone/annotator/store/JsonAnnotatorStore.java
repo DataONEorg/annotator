@@ -331,30 +331,44 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 			}
 			// initial filter by the uri that is being annotated
 			if (pair.getName().equals("uri")) {
-				solrQuery += URLEncoder.encode("+sem_annotates:\"" + pair.getValue() + "\"", "UTF-8");
+				String pid = pair.getValue();
+				//need better substringing to handle pids with slashes in them
+				pid = pid.substring(pid.lastIndexOf("/") + 1);
+				
+				solrQuery += URLEncoder.encode("+sem_annotates:\"" + pid + "\"", "UTF-8");
 			}
 			// add the criteria for further filtering after initial retrieval
 			predicates.add(new AnnotationPredicate(pair.getName(), pair.getValue()));
 		}
 		
+		solrQuery += URLEncoder.encode("-obsoletedBy:*", "UTF-8");
+		
 		//more solr options
 		solrQuery += "&fl=id,sem_annotates,sem_annotated_by&wt=json";
-		
+		log.debug("solrQuery = " + solrQuery);
+
 		// search the index
 		InputStream solrResultStream = storageNode.query(session, "solr", solrQuery);
 
 		JSONObject solrResults = (JSONObject) JSONValue.parse(solrResultStream);
+		log.debug("solrResults = " + solrResults.toJSONString());
 		
 		JSONArray annotations = new JSONArray();
 
 		if (solrResults != null && solrResults.containsKey("response")) {
 			JSONArray solrDocs = (JSONArray)((JSONObject) solrResults.get("response")).get("docs");
+			log.debug("solrDocs = " + solrDocs.toJSONString());
 			
 			for (Object solrDoc: solrDocs) {
+				log.debug("solrDoc = " + solrDoc.toString());
+				
 				String id = ((JSONObject) solrDoc).get("id").toString();
+				log.debug("id = " + id);
 				
 				String annotationContent = this.read(id);
 				JSONObject annotation = (JSONObject) JSONValue.parse(annotationContent);
+				log.debug("annotation = " + annotation);
+
 				annotations.add(annotation);
 			}
 		}
