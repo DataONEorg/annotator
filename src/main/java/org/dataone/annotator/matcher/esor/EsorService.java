@@ -21,10 +21,10 @@ public class EsorService implements ConceptMatcher {
 
 	private static Log log = LogFactory.getLog(EsorService.class);
 
-	private static final String REST_URL = "http://127.0.0.1:9100/search";
+	//private static final String REST_URL = "http://127.0.0.1:9100/search";
 
 	//temporary server for testing
-	//private static final String REST_URL = "http://dataonetwc.tw.rpi.edu/linkipedia/search";
+	private static final String REST_URL = "http://dataonetwc.tw.rpi.edu/linkipedia/search";
 
 
 	@Override
@@ -66,9 +66,13 @@ public class EsorService implements ConceptMatcher {
 			String url = r.getString("url");
 			String score = r.getString("score");
 
-
-			ConceptItem c = new ConceptItem(new URI(url.substring(1,url.length()-1)), Double.parseDouble(score));
-			concepts.add(c);
+			//returned result may be empty
+			if(url.length()>0) {
+				ConceptItem c = new ConceptItem(new URI(url.substring(1, url.length() - 1)), Double.parseDouble(score));
+				concepts.add(c);
+			}else{
+				System.out.println("NA");
+			}
 		}
 
 		return concepts;
