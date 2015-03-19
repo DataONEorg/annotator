@@ -319,7 +319,7 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 	 */
 	private String searchIndex(String query) throws Exception {
 		
-		String solrQuery = "?q=formatId:\"" + URLEncoder.encode(ANNOTATION_FORMAT_ID, "UTF-8") + "\"";
+		String solrQuery = "q=" + URLEncoder.encode("formatId:\"" + ANNOTATION_FORMAT_ID + "\"", "UTF-8");
 
 		// parse the query syntax
 		Collection<Predicate> predicates = new ArrayList<Predicate>();
@@ -331,7 +331,7 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 			}
 			// initial filter by the uri that is being annotated
 			if (pair.getName().equals("uri")) {
-				solrQuery += "+sem_annotates:\"" + URLEncoder.encode(pair.getValue(), "UTF-8") + "\"";
+				solrQuery += URLEncoder.encode("+sem_annotates:\"" + pair.getValue() + "\"", "UTF-8");
 			}
 			// add the criteria for further filtering after initial retrieval
 			predicates.add(new AnnotationPredicate(pair.getName(), pair.getValue()));
