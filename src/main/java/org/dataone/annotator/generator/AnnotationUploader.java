@@ -15,15 +15,13 @@ import org.dataone.service.types.v1.Session;
 public class AnnotationUploader {
 	
 	private static Log log = LogFactory.getLog(AnnotationUploader.class);
-	
-	private static Session session = null;
-	
+		
 	private AnnotationGenerator generator = null;
 	
 	private AnnotatorStore store = null;
 	
-	public AnnotationUploader() throws Exception {
-		
+	public AnnotationUploader(Session session) throws Exception {
+				
 		String generatorClassName = Settings.getConfiguration().getString("annotator.generator.className");
 		generator = (AnnotationGenerator) Class.forName(generatorClassName).newInstance();
 		

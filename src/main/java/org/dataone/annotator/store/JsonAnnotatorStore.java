@@ -125,8 +125,11 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 		sysmeta.setRightsHolder(rightsHolder);
 		sysmeta.setSubmitter(rightsHolder);
 
-		NodeReference authoritativeMemberNode = storageNode.getNodeId();
-		sysmeta.setAuthoritativeMemberNode(authoritativeMemberNode );
+		// TODO: update this when bug is fixed: https://redmine.dataone.org/issues/6955
+		//NodeReference authoritativeMemberNode = storageNode.getNodeId();
+		NodeReference authoritativeMemberNode = storageNode.getCapabilities().getIdentifier();
+
+		sysmeta.setAuthoritativeMemberNode(authoritativeMemberNode);
 		sysmeta.setOriginMemberNode(authoritativeMemberNode);
 		
 		sysmeta.setDateSysMetadataModified(DateTimeMarshaller.deserializeDateToUTC(annotation.get("updated").toString()));
