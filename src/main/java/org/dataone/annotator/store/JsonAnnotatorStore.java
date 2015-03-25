@@ -175,6 +175,10 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 		// add properties to the annotation
 		annotation.put("id", sid.getValue());
 		annotation.put("user", session.getSubject().getValue());
+		((JSONArray)((JSONObject) annotation.get("permissions")).get("admin")).add(session.getSubject().getValue());
+		((JSONArray)((JSONObject) annotation.get("permissions")).get("update")).add(session.getSubject().getValue());
+		((JSONArray)((JSONObject) annotation.get("permissions")).get("delete")).add(session.getSubject().getValue());
+		
 		Date now = Calendar.getInstance().getTime();
 		annotation.put("created", DateTimeMarshaller.serializeDateToUTC(now));
 		annotation.put("updated", DateTimeMarshaller.serializeDateToUTC(now));
@@ -188,7 +192,7 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 		InputStream object = new ByteArrayInputStream(annotation.toJSONString().getBytes(DEFAULT_ENCODING));
 		storageNode.create(session, pid, object, sysmeta);
 		
-		return pid.getValue();
+		return sid.getValue();
 	}
 
 	/* (non-Javadoc)
