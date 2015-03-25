@@ -360,7 +360,7 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 		solrQuery += URLEncoder.encode("-obsoletedBy:*", "UTF-8");
 		
 		//more solr options
-		solrQuery += "&fl=id,sem_annotates,sem_annotated_by&wt=json";
+		solrQuery += "&fl=id,sem_annotates,sem_annotated_by&wt=json&rows=1000";
 		log.debug("solrQuery = " + solrQuery);
 
 		// search the index
