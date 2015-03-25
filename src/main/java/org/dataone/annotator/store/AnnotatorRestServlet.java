@@ -282,6 +282,7 @@ public class AnnotatorRestServlet extends HttpServlet {
 				} else {
 					response.setStatus(200);
 					// write it back in the response
+					annotationContent = as.read(id);
 					IOUtils.write(annotationContent, response.getOutputStream());
 				}
 				
