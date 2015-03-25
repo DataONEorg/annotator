@@ -27,10 +27,12 @@ public class AnnotationUploaderTest {
 		identifiers.add("https://pasta.lternet.edu/package/metadata/eml/knb-lter-arc/20032/2");
 		
 		X509Certificate certificate = CertificateManager.getInstance().loadCertificate();
+		PrivateKey key = CertificateManager.getInstance().loadKey();
 		String subjectDN = CertificateManager.getInstance().getSubjectDN(certificate);
+		CertificateManager.getInstance().registerCertificate(subjectDN, certificate, key );
 		session = new Session();
 		Subject subject = new Subject();
-		subject.setValue(subjectDN );
+		subject.setValue(subjectDN);
 		session.setSubject(subject);
 		
 	}
