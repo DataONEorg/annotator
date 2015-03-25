@@ -428,16 +428,22 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
     	// TODO: transfer all permissions from sysmeta?
     	JSONObject permissions = (JSONObject) JSONValue.parse(
     			"{" +
-    				"\"read\": [\"group:__world__\"]" +
-//    				"\"update\": [\"" +
-//    					sysMeta.getRightsHolder().getValue()
-//    				+ "\"], " +
-//    		        "\"delete\": [\"" +
-//    		        	sysMeta.getRightsHolder().getValue()
-//    		        + "\"], " +
-//    		        "\"admin\": [\"" +
-//    		        	sysMeta.getRightsHolder().getValue()
-//    		        + "\"]" +
+    				"\"read\": [\"group:__world__\"], " +
+    				"\"update\": [" +
+    				"\"" +
+    					sysMeta.getRightsHolder().getValue()
+    				+ "\"" +
+    				"], " +
+    		        "\"delete\": [" +
+    		        "\"" +
+    		        	sysMeta.getRightsHolder().getValue()
+    		        + "\"" +
+    		        "], " +
+    		        "\"admin\": [" +
+    		        "\"" +
+    		        	sysMeta.getRightsHolder().getValue()
+    		        + "\"" +
+    		        "]" +
     		     "}"
     			);
 		annotation.put("permissions", permissions);
