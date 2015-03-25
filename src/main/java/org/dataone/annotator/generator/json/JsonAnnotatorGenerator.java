@@ -425,19 +425,19 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
     	annotation.put("uri", Settings.getConfiguration().getProperty("D1Client.CN_URL") + "/v2/resolve/" + metadataPid.getValue());
     	annotation.put("consumer", Settings.getConfiguration().getProperty("annotator.consumerKey"));
     	
-    	// TODO: transfer all permissions from sysmeta
+    	// TODO: transfer all permissions from sysmeta?
     	JSONObject permissions = (JSONObject) JSONValue.parse(
     			"{" +
-    				"\"update\": [\"" +
-    					sysMeta.getRightsHolder().getValue()
-    				+ "\"], " +
-    				"\"read\": [\"group:__world__\"], " +
-    		        "\"delete\": [\"" +
-    		        	sysMeta.getRightsHolder().getValue()
-    		        + "\"], " +
-    		        "\"admin\": [\"" +
-    		        	sysMeta.getRightsHolder().getValue()
-    		        + "\"]" +
+    				"\"read\": [\"group:__world__\"]" +
+//    				"\"update\": [\"" +
+//    					sysMeta.getRightsHolder().getValue()
+//    				+ "\"], " +
+//    		        "\"delete\": [\"" +
+//    		        	sysMeta.getRightsHolder().getValue()
+//    		        + "\"], " +
+//    		        "\"admin\": [\"" +
+//    		        	sysMeta.getRightsHolder().getValue()
+//    		        + "\"]" +
     		     "}"
     			);
 		annotation.put("permissions", permissions);
