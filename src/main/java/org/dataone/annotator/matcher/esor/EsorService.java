@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
@@ -31,18 +32,23 @@ public class EsorService implements ConceptMatcher {
 
 	@Override
 	public List<ConceptItem> getConcepts(String fullText) throws Exception {
-		return getConcepts(new QueryItem(fullText));
+		return lookupEsor(fullText);
 	}
 
 	@Override
-	public List<ConceptItem> getConcepts(QueryItem queryItem) throws Exception {
-		return lookupEsor(queryItem);
+	public List<ConceptItem> getConcepts(Map<String, String> queryItems) throws Exception {
+		StringBuffer sb = new StringBuffer();
+		for (String value: queryItems.values()) {
+			sb.append(value);
+			sb.append(" ");
+		}
+		return lookupEsor(sb.toString());
 	}
 
-	private static List<ConceptItem> lookupEsor(QueryItem queryItem) throws Exception  {
+	private static List<ConceptItem> lookupEsor(String query) throws Exception  {
 
 		HttpClient client = HttpClients.createDefault();
-		String uriStr = REST_URL + "?query=" + URLEncoder.encode(queryItem.toString(), "UTF-8");
+		String uriStr = REST_URL + "?query=" + URLEncoder.encode(query, "UTF-8");
 		//System.out.println(uriStr);
 
 		HttpGet method = new HttpGet(uriStr);
@@ -57,7 +63,7 @@ public class EsorService implements ConceptMatcher {
 		System.out.println(jsonStr);
 
 		JSONObject json = new JSONObject(jsonStr);
-		String query = json.getString("query");
+		//String query = json.getString("query");
 		JSONArray results = json.getJSONArray("results");
 
 		//analysis the result and return

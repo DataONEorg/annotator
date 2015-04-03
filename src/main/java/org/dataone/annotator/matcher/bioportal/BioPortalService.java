@@ -6,6 +6,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -47,8 +48,13 @@ public class BioPortalService implements ConceptMatcher {
     	
     }
 
-	public List<ConceptItem> getConcepts(QueryItem queryItem) throws Exception {
-		return getConcepts(queryItem.toString());
+	public List<ConceptItem> getConcepts(Map<String, String> queryItems) throws Exception {
+		StringBuffer sb = new StringBuffer();
+		for (String value: queryItems.values()) {
+			sb.append(value);
+			sb.append(" ");
+		}
+		return getConcepts(sb.toString());
 	}
     
     /**

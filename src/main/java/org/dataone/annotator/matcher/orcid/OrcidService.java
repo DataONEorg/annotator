@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -37,8 +38,13 @@ class OrcidService implements ConceptMatcher {
     }
 
 	@Override
-	public List<ConceptItem> getConcepts(QueryItem queryItem) throws Exception {
-		return lookupOrcid(queryItem.toString(), null, null, null);
+	public List<ConceptItem> getConcepts(Map<String, String> queryItems) throws Exception {
+		StringBuffer sb = new StringBuffer();
+		for (String value: queryItems.values()) {
+			sb.append(value);
+			sb.append(" ");
+		}
+		return lookupOrcid(sb.toString(), null, null, null);
 
 	}
     /**
