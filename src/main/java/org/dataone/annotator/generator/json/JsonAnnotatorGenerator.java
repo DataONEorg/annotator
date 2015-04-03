@@ -301,17 +301,20 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 		
 		// loop through the attributes
 		JSONArray attributeNames = (JSONArray) solrDoc.get("attributeName");
-		JSONArray fullAttributes = (JSONArray) solrDoc.get("attribute");
+		//JSONArray fullAttributes = (JSONArray) solrDoc.get("attribute");
 
 		int attributeCount = 1;
-		if (fullAttributes != null) {
-			for (Object attribute: fullAttributes) {
+		if (attributeNames != null) {
+			Iterator<Object> attributeIter = attributeNames.iterator();
+			
+			while (attributeIter.hasNext()) {
+				Object attribute = attributeIter.next();
 				
-				String attributeText = attribute.toString();
-				String attributeName = attributeNames.get(attributeCount - 1).toString();
+				String attributeName = attribute.toString();
+				//String attributeText = fullAttributes.get(attributeCount - 1).toString();
 
 				log.debug("Attribute name: " + attributeName);
-				log.debug("Attribute text: " + attributeText);
+				//log.debug("Attribute text: " + attributeText);
 
 				// capture the annotation
 		    	JSONObject annotation = createAnnotationTemplate(metadataPid);
@@ -335,7 +338,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 				annotation.put("ranges", ranges);
 		    			
 				// look up concepts for all the attribute text we have
-				List<ConceptItem> concepts = conceptMatcher.getConcepts(attributeText.toString());
+				List<ConceptItem> concepts = conceptMatcher.getConcepts(attributeName);
 				if (concepts != null && concepts.size() > 0) {
 					// add the tags
 					JSONArray tags = new JSONArray();
@@ -370,7 +373,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 			// use an orcid if we can find one from their system
 			String creatorText = creator;
 			List<ConceptItem> concepts = orcidMatcher.getConcepts(creatorText);
-			if (concepts != null) {
+			if (concepts != null && concepts.size() > 0) {
 				JSONObject annotation = createAnnotationTemplate(metadataPid);
 				JSONArray creatorTags = new JSONArray();
 				for (ConceptItem item: concepts) {
@@ -400,7 +403,9 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 				Identifier pid = new Identifier();
 				pid.setValue(annotation.get("id").toString());
 				annotations.put(pid, sw.toString());
-			} 
+			} else {
+				// do nothing
+			}
 		}
 		
 		
