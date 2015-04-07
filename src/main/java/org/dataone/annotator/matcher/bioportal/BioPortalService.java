@@ -31,7 +31,7 @@ public class BioPortalService implements ConceptMatcher {
     // for looking up concepts in BioPortal
     private static final String REST_URL = "http://data.bioontology.org";
     private static final String API_KEY = "24e4775e-54e0-11e0-9d7b-005056aa3316";
-    private static final String ONTOLOGIES = "D1-CARBON-FLUX";
+    private static final String ONTOLOGIES = "D1-CARBON-FLUX,PROV-ONE,ENVO,CHEBI,DATA-CITE,DC-TERMS,OWL-TIME";
 
 
     @Override
