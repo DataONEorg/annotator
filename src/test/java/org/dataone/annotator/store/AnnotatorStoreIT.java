@@ -46,7 +46,7 @@ public class AnnotatorStoreIT  {
 	 */
 	@Before
 	public void setUp() throws Exception {
-		String testToken = TokenGenerator.getJWT("uid=kepler,o=unaffiliated,dc=ecoinformatics,dc=org", "Kepler");
+		String testToken = TokenGenerator.getInstance().getJWT("uid=kepler,o=unaffiliated,dc=ecoinformatics,dc=org", "Kepler");
 		request.addHeader("x-annotator-auth-token", testToken);
 
 	}

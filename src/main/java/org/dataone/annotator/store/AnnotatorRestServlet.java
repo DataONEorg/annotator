@@ -75,7 +75,11 @@ public class AnnotatorRestServlet extends HttpServlet {
 		if (session == null) {
 			debugHeaders(request);
 			String token = request.getHeader("x-annotator-auth-token");
-			session = TokenGenerator.getSession(token);
+			try {
+				session = TokenGenerator.getInstance().getSession(token);
+			} catch (IOException e) {
+				log.warn(e.getMessage(), e);
+			}
 			log.debug("Session from x-annotator-auth-token: " + session);
 		}
 		
@@ -227,7 +231,7 @@ public class AnnotatorRestServlet extends HttpServlet {
 	        				fullName = subjectInfo.getPerson(0).getGivenName(0) + fullName;
 	        			}
 	        		}
-	    			token = TokenGenerator.getJWT(userId, fullName);
+	    			token = TokenGenerator.getInstance().getJWT(userId, fullName);
 	    			
 	    			// make sure we keep the cookie on the reponse
 	        		Cookie cookie = PortalCertificateManager.getInstance().getCookie(request);
