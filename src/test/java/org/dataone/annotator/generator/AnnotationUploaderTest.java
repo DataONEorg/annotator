@@ -39,6 +39,10 @@ public class AnnotationUploaderTest {
 		identifiers = new ArrayList<String>();
 		
 		X509Certificate certificate = CertificateManager.getInstance().loadCertificate();
+		if (certificate == null) {
+			return;
+		}
+			
 		PrivateKey key = CertificateManager.getInstance().loadKey();
 		String subjectDN = CertificateManager.getInstance().getSubjectDN(certificate);
 		CertificateManager.getInstance().registerCertificate(subjectDN, certificate, key );

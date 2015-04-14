@@ -19,8 +19,12 @@
 package org.dataone.annotator.matcher.bioportal;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+import java.util.List;
 
 import org.dataone.annotator.generator.oa.OAAnnotationGenerator;
+import org.dataone.annotator.matcher.ConceptItem;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,16 +60,22 @@ public class BioPortalServiceTest {
 	
 	@Test
 	public void testLookup() {
-		// set up our simple model for testing: Characteristic <- Temperature
-		OntModel m = ModelFactory.createOntologyModel();
-		OntClass characteristicClass = m.createClass(OAAnnotationGenerator.oboe_core + "Characteristic");
-		OntClass temperatureClass = m.createClass(OAAnnotationGenerator.oboe_characteristics + "Temperature");
-		temperatureClass.addSuperClass(characteristicClass);
 		
-		// look up the annotation recommendation from BioPortal
-		String text = "Air temperature";
-		Resource retClass = BioPortalService.lookupAnnotationClass(characteristicClass, text, OAAnnotationGenerator.OBOE_SBC);
-		assertEquals(OAAnnotationGenerator.oboe_characteristics + "Temperature", retClass.getURI());
+		try {
+
+			// look up the annotation recommendation from BioPortal
+			String text = "carbon flux";
+			BioPortalService service = new BioPortalService();
+			List<ConceptItem> results;
+			results = service.getConcepts(text);
+			String retConcept = results.get(0).getUri().toString();
+			assertEquals("http://purl.obolibrary.org/obo/CHEBI_27594", retConcept);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+		
 	}
 
 }

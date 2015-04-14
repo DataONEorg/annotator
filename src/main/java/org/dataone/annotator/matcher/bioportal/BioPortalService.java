@@ -15,7 +15,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.xpath.XPathAPI;
 import org.dataone.annotator.matcher.ConceptItem;
 import org.dataone.annotator.matcher.ConceptMatcher;
-import org.dataone.annotator.matcher.QueryItem;
+import org.dataone.configuration.Settings;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
@@ -29,15 +29,21 @@ public class BioPortalService implements ConceptMatcher {
 	private static Log log = LogFactory.getLog(BioPortalService.class);
 	
     // for looking up concepts in BioPortal
-    private static final String REST_URL = "http://data.bioontology.org";
-    private static final String API_KEY = "24e4775e-54e0-11e0-9d7b-005056aa3316";
-    private static final String ONTOLOGIES = "D1-CARBON-FLUX,PROV-ONE,ENVO,CHEBI,DATA-CITE,DC-TERMS,OWL-TIME";
+    private String restUrl = null;
+    private String apiKey = null;
+    private String ontologies = null;
 
+    public BioPortalService() {
+    	restUrl = Settings.getConfiguration().getString("annotator.matcher.bioportal.restUrl", "http://data.bioontology.org");
+    	apiKey = Settings.getConfiguration().getString("annotator.matcher.bioportal.apiKey", "24e4775e-54e0-11e0-9d7b-005056aa3316");
+    	ontologies = Settings.getConfiguration().getString("annotator.matcher.bioportal.ontologies", "D1-CARBON-FLUX,PROV-ONE,ENVO,CHEBI,DATA-CITE,DC-TERMS,OWL-TIME");
+
+    }
 
     @Override
     public List<ConceptItem> getConcepts(String text) throws Exception {
     	List <ConceptItem> concepts = new ArrayList<ConceptItem>();
-    	List<Resource> resources = lookupAnnotationClasses(null, text, ONTOLOGIES);
+    	List<Resource> resources = lookupAnnotationClasses(null, text, ontologies);
     	int i = resources.size();
     	for (Resource resource: resources) {
     		double rank = i--/resources.size();
@@ -64,7 +70,7 @@ public class BioPortalService implements ConceptMatcher {
 	 * @param text
 	 * @return
 	 */
-	private static List<Resource> lookupAnnotationClasses(OntClass superClass, String text, String ontologies) {
+	private List<Resource> lookupAnnotationClasses(OntClass superClass, String text, String ontologies) {
 		
 		// no point calling the service
 		if (text == null || text.length() == 0) {
@@ -75,14 +81,14 @@ public class BioPortalService implements ConceptMatcher {
 		
 		try {
 			
-			String urlParameters = "apikey=" + API_KEY;
+			String urlParameters = "apikey=" + apiKey;
 			urlParameters += "&format=xml";
 			if (ontologies != null) {
 				urlParameters += "&ontologies=" + ontologies;
 			}
 			urlParameters += "&text=" + URLEncoder.encode(text, "UTF-8");
 			
-			String url = REST_URL + "/annotator?" + urlParameters ;
+			String url = restUrl + "/annotator?" + urlParameters ;
 			URL restURL = new URL(url);
 			InputStream is = restURL.openStream();
 			Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is);
@@ -122,14 +128,6 @@ public class BioPortalService implements ConceptMatcher {
 		}
 		
 		return results;
-	}
-	
-	public static Resource lookupAnnotationClass(OntClass superClass, String text, String ontologies) {
-		List<Resource> results = lookupAnnotationClasses(superClass, text, ontologies);
-		if (results != null && results.size() > 0) {
-			return results.get(0);
-		}
-		return null;
 	}
 
 }
