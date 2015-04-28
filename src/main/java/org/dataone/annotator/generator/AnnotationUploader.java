@@ -5,6 +5,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.annotator.store.AnnotatorStore;
@@ -34,7 +38,7 @@ public class AnnotationUploader {
 		}
 	}
 	
-	public void process(List<String> identifiers) throws Exception {
+	public void createAnnotationsFor(List<String> identifiers) throws Exception {
 		
 		// loop through our annotations
 		for (String identifier: identifiers) {
@@ -60,4 +64,27 @@ public class AnnotationUploader {
 		}	
 	}
 	
+	public void removeAnnotationsFor(List<String> identifiers) throws Exception {
+		
+		// loop through our annotated identifiers
+		for (String identifier: identifiers) {
+			log.debug("Removing annotations for: " + identifier);
+			Identifier pid = new Identifier();
+			pid.setValue(identifier);
+			String searchResultContent = store.search("pid=" + identifier);
+			
+			JSONObject searchResults = (JSONObject) JSONValue.parse(searchResultContent);
+			JSONArray annotations = (JSONArray) searchResults.get("rows");
+			Iterator<Object> annotationIter = annotations.iterator();
+			while (annotationIter.hasNext()) {
+				JSONObject annotation = (JSONObject) annotationIter.next();
+				String id = annotation.get("id").toString();
+				log.debug("deleting annotation: " + id);
+				store.delete(id);
+			}
+		}
+	}	
+	
+	
 }
+	

@@ -295,7 +295,13 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
         JSONObject solrResults = (JSONObject) results;
         
         // get the first matching doc (should be only)
-        JSONObject solrDoc = (JSONObject) ((JSONArray)((JSONObject) solrResults.get("response")).get("docs")).get(0);
+        JSONObject solrDoc = null;
+        try {
+        	solrDoc = (JSONObject) ((JSONArray)((JSONObject) solrResults.get("response")).get("docs")).get(0);
+        } catch (Exception e) {
+        	log.warn(e.getMessage(), e);
+        	return null;
+        }
     	 
 		Map<Identifier, String> annotations = new HashMap<Identifier, String>();
 		
