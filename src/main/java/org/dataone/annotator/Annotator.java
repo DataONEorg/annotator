@@ -42,10 +42,12 @@ public class Annotator {
                 .create("pidfile");
 		Option create = new Option("create", "generate the annotations");
 		Option remove = new Option("remove", "remove the annotations");
+		Option removeAll = new Option("removeAll", "remove ALL annotations");
 		Options options = new Options();
 		
 		options.addOption(create);
 		options.addOption(remove);
+		options.addOption(removeAll);
 		options.addOption(pidFile);
 
 		return options;
@@ -119,6 +121,8 @@ public class Annotator {
 				uploader.createAnnotationsFor(identifiers);
 	        } else if (cmd.hasOption("remove")) {
 	        	uploader.removeAnnotationsFor(identifiers);
+	        } else if (cmd.hasOption("removeAll")) {
+	        	uploader.removeAll();
 	        }
         } catch (Exception e) {
         	e.printStackTrace();

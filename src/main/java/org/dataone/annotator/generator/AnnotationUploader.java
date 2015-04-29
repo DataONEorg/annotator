@@ -85,6 +85,26 @@ public class AnnotationUploader {
 		}
 	}	
 	
+	public void removeAll() throws Exception {
+		
+		String indexContent = store.index();
+		
+		JSONArray annotations = (JSONArray) JSONValue.parse(indexContent);
+		Iterator<Object> annotationIter = annotations.iterator();
+		while (annotationIter.hasNext()) {
+			JSONObject annotation = (JSONObject) annotationIter.next();
+			String id = annotation.get("id").toString();
+			log.debug("deleting annotation: " + id);
+			try {
+				store.delete(id);
+			} catch (Exception e) {
+				// warn, but continue
+				log.warn(e.getMessage(), e);
+			}
+		}
+		
+	}	
+	
 	
 }
 	
