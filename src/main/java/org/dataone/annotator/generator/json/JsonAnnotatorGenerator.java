@@ -51,7 +51,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 		// initialize the concept matcher implementations we will use
 		String matcherClassName = Settings.getConfiguration().getString("annotator.matcher.className");
 		conceptMatcher = ConceptMatcherFactory.getMatcher(matcherClassName);
-		orcidMatcher = ConceptMatcherFactory.getMatcher(ConceptMatcherFactory.ORCID);
+		//orcidMatcher = ConceptMatcherFactory.getMatcher(ConceptMatcherFactory.ORCID);
 
 	}
 	
@@ -103,8 +103,8 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
      */
 	@Override
 	 public Map<Identifier, String> generateAnnotations(Identifier metadataPid) throws Exception {
-		//return generateAnnotationsFromEML(metadataPid);
-		return generateAnnotationsFromIndex(metadataPid);
+		return generateAnnotationsFromEML(metadataPid);
+		//return generateAnnotationsFromIndex(metadataPid);
 	}
 	
 	/**
@@ -179,19 +179,11 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 				    	annotation.put("oa:Motivation", "oa:tagging");
 				    	
 				    	// target a (hopefully stable) div for the highlight
-				    	// here's an example for attributeName
-				    	//"ranges":[
-				    		//{
-				    		//"endOffset":8,
-				    		//"start":"\/\/*[@id='attributeName_6']\/div[1]",
-				    		//"end":"\/\/*[@id='attributeName_6']\/div[1]",
-				    		//"startOffset":0}
-						//]
 						
 				    	// the range for the highlighted text
 				    	JSONObject range = new JSONObject();
-				    	range.put("start", "//*[@id='attributeName_" + attributeCount + "']/div[1]");
-				    	range.put("end", "//*[@id='attributeName_" + attributeCount + "']/div[1]");
+				    	range.put("start", "//*[@id='entity_" + entityCount + "_attribute_" + attributeCount + "']/div[1]/div[1]");
+				    	range.put("end", "//*[@id='entity_" + entityCount + "_attribute_" + attributeCount + "']/div[1]/div[1]");
 				    	range.put("startOffset", 0);
 				    	range.put("endOffset", attributeName.length());
 				    	JSONArray ranges = new JSONArray();
@@ -230,44 +222,46 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 			}
 		}
 		
-		// look up creators from the EML metadata for an attribution annotation
-		List<Party> creators = dataPackage.getCreators();
-		if (creators != null && creators.size() > 0) {	
-			
-			// use an orcid if we can find one from their system
-			String creatorText = creators.get(0).getOrganization() + " " + creators.get(0).getSurName() + " " + creators.get(0).getGivenNames();
-			List<ConceptItem> concepts = orcidMatcher.getConcepts(creatorText);
-			if (concepts != null) {
-				JSONObject annotation = createAnnotationTemplate(metadataPid);
-				JSONArray creatorTags = new JSONArray();
-				for (ConceptItem item: concepts) {
-					String orcidUri = item.getUri().toString();
-					creatorTags.add(orcidUri);
-				}
-				annotation.put("tags", creatorTags);
+		if (orcidMatcher != null) {
+			// look up creators from the EML metadata for an attribution annotation
+			List<Party> creators = dataPackage.getCreators();
+			if (creators != null && creators.size() > 0) {	
 				
-				String xpointer = "#xpointer(/eml/dataset/creator[" + 1 + "]/individual/surname)";
-		    	annotation.put("field", "orcid_sm");
-		    	annotation.put("resource", xpointer);
-		    	annotation.put("quote", creators.get(0).getSurName());
-		    	annotation.put("oa:Motivation", "prov:wasAttributedTo");
-		    	
-		    	// the range for the highlighted text
-		    	JSONObject range = new JSONObject();
-		    	range.put("start", "//*[@id='origin_" + 1 + "']/div[1]");
-		    	range.put("end", "//*[@id='origin_" + 1 + "']/div[1]");
-		    	range.put("startOffset", 0);
-		    	range.put("endOffset", creators.get(0).getSurName().length());
-		    	JSONArray ranges = new JSONArray();
-		    	ranges.add(range);
-				annotation.put("ranges", ranges);
-		    	
-		    	StringWriter sw = new StringWriter();
-				annotation.writeJSONString(sw);
-				Identifier pid = new Identifier();
-				pid.setValue(annotation.get("id").toString());
-				annotations.put(pid, sw.toString());
-			} 
+				// use an orcid if we can find one from their system
+				String creatorText = creators.get(0).getOrganization() + " " + creators.get(0).getSurName() + " " + creators.get(0).getGivenNames();
+				List<ConceptItem> concepts = orcidMatcher.getConcepts(creatorText);
+				if (concepts != null) {
+					JSONObject annotation = createAnnotationTemplate(metadataPid);
+					JSONArray creatorTags = new JSONArray();
+					for (ConceptItem item: concepts) {
+						String orcidUri = item.getUri().toString();
+						creatorTags.add(orcidUri);
+					}
+					annotation.put("tags", creatorTags);
+					
+					String xpointer = "#xpointer(/eml/dataset/creator[" + 1 + "]/individual/surname)";
+			    	annotation.put("field", "orcid_sm");
+			    	annotation.put("resource", xpointer);
+			    	annotation.put("quote", creators.get(0).getSurName());
+			    	annotation.put("oa:Motivation", "prov:wasAttributedTo");
+			    	
+			    	// the range for the highlighted text
+			    	JSONObject range = new JSONObject();
+			    	range.put("start", "//*[@id='creator_" + 1 + "']/div[1]");
+			    	range.put("end", "//*[@id='creator_" + 1 + "']/div[1]");
+			    	range.put("startOffset", 0);
+			    	range.put("endOffset", creators.get(0).getSurName().length());
+			    	JSONArray ranges = new JSONArray();
+			    	ranges.add(range);
+					annotation.put("ranges", ranges);
+			    	
+			    	StringWriter sw = new StringWriter();
+					annotation.writeJSONString(sw);
+					Identifier pid = new Identifier();
+					pid.setValue(annotation.get("id").toString());
+					annotations.put(pid, sw.toString());
+				} 
+			}	
 		}
 		
 		
@@ -371,46 +365,48 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 		}
 		
 		
-		// look up creators from the EML metadata for an attribution annotation
-		JSONArray creators = (JSONArray) solrDoc.get("origin");
-		if (creators != null && creators.size() > 0) {	
-			
-			String creator = creators.get(0).toString();
-			// use an orcid if we can find one from their system
-			String creatorText = creator;
-			List<ConceptItem> concepts = orcidMatcher.getConcepts(creatorText);
-			if (concepts != null && concepts.size() > 0) {
-				JSONObject annotation = createAnnotationTemplate(metadataPid);
-				JSONArray creatorTags = new JSONArray();
-				for (ConceptItem item: concepts) {
-					String orcidUri = item.getUri().toString();
-					creatorTags.add(orcidUri);
-				}
-				annotation.put("tags", creatorTags);
+		if (orcidMatcher != null) {
+			// look up creators from the EML metadata for an attribution annotation
+			JSONArray creators = (JSONArray) solrDoc.get("origin");
+			if (creators != null && creators.size() > 0) {	
 				
-				String xpointer = "#xpointer(//origin[" + 1 + "])";
-		    	annotation.put("field", "orcid_sm");
-		    	annotation.put("resource", xpointer);
-		    	annotation.put("quote", creator);
-		    	annotation.put("oa:Motivation", "prov:wasAttributedTo");
-		    	
-		    	// the range for the highlighted text
-		    	JSONObject range = new JSONObject();
-		    	range.put("start", "//*[@id='origin_" + 1 + "']/div[1]");
-		    	range.put("end", "//*[@id='origin_" + 1 + "']/div[1]");
-		    	range.put("startOffset", 0);
-		    	range.put("endOffset", creator.length());
-		    	JSONArray ranges = new JSONArray();
-		    	ranges.add(range);
-				annotation.put("ranges", ranges);
-		    	
-		    	StringWriter sw = new StringWriter();
-				annotation.writeJSONString(sw);
-				Identifier pid = new Identifier();
-				pid.setValue(annotation.get("id").toString());
-				annotations.put(pid, sw.toString());
-			} else {
-				// do nothing
+				String creator = creators.get(0).toString();
+				// use an orcid if we can find one from their system
+				String creatorText = creator;
+				List<ConceptItem> concepts = orcidMatcher.getConcepts(creatorText);
+				if (concepts != null && concepts.size() > 0) {
+					JSONObject annotation = createAnnotationTemplate(metadataPid);
+					JSONArray creatorTags = new JSONArray();
+					for (ConceptItem item: concepts) {
+						String orcidUri = item.getUri().toString();
+						creatorTags.add(orcidUri);
+					}
+					annotation.put("tags", creatorTags);
+					
+					String xpointer = "#xpointer(//origin[" + 1 + "])";
+			    	annotation.put("field", "orcid_sm");
+			    	annotation.put("resource", xpointer);
+			    	annotation.put("quote", creator);
+			    	annotation.put("oa:Motivation", "prov:wasAttributedTo");
+			    	
+			    	// the range for the highlighted text
+			    	JSONObject range = new JSONObject();
+			    	range.put("start", "//*[@id='origin_" + 1 + "']/div[1]");
+			    	range.put("end", "//*[@id='origin_" + 1 + "']/div[1]");
+			    	range.put("startOffset", 0);
+			    	range.put("endOffset", creator.length());
+			    	JSONArray ranges = new JSONArray();
+			    	ranges.add(range);
+					annotation.put("ranges", ranges);
+			    	
+			    	StringWriter sw = new StringWriter();
+					annotation.writeJSONString(sw);
+					Identifier pid = new Identifier();
+					pid.setValue(annotation.get("id").toString());
+					annotations.put(pid, sw.toString());
+				} else {
+					// do nothing
+				}
 			}
 		}
 		
