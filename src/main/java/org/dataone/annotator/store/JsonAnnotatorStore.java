@@ -280,7 +280,9 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 	 */
 	@Override
 	public String search(String query) throws Exception {
-		return searchIndex(query);
+		//return searchIndex(query);
+		return searchList(query);
+
 	}
 	
 	/**
@@ -289,7 +291,7 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 	 * in favor of the solr-base search method
 	 * @deprecated
 	 */
-	public String searchList(String query) throws Exception {
+	private String searchList(String query) throws Exception {
 		
 		JSONObject results = new JSONObject();
 		
