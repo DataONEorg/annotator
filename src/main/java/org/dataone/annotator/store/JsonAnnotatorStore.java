@@ -280,8 +280,8 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 	 */
 	@Override
 	public String search(String query) throws Exception {
-		//return searchIndex(query);
-		return searchList(query);
+		return searchIndex(query);
+		//return searchList(query);
 
 	}
 	
@@ -382,6 +382,19 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 				
 				String id = ((JSONObject) solrDoc).get("id").toString();
 				log.debug("id = " + id);
+				
+				// check if archived
+				boolean include = true;
+				Identifier pid = new Identifier();
+				pid.setValue(id);
+				try {
+					include = !storageNode.getSystemMetadata(null, pid).getArchived();
+				} catch (Exception e) {
+					include = false;
+				}
+				if (!include) {
+					continue;
+				}
 				
 				String annotationContent = this.read(id);
 				JSONObject annotation = (JSONObject) JSONValue.parse(annotationContent);
