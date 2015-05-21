@@ -196,11 +196,12 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 						
 						if (concepts != null && concepts.size() > 0) {
 
-							// add the tags
-							// TODO: increase granularity to one tag per annotation?
+							// add the concept[s] as tag[s]
 							JSONArray tags = new JSONArray();
 							for (ConceptItem conceptItem: concepts) {
 								tags.add(conceptItem.getUri().toString());
+								// TODO: more than one match?
+								break;
 							}
 							annotation.put("tags", tags);
 							
@@ -236,6 +237,8 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 					for (ConceptItem item: concepts) {
 						String orcidUri = item.getUri().toString();
 						creatorTags.add(orcidUri);
+						// TODO: more than one match?
+						break;
 					}
 					annotation.put("tags", creatorTags);
 					
@@ -344,6 +347,8 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 					JSONArray tags = new JSONArray();
 					for (ConceptItem conceptItem: concepts) {
 						tags.add(conceptItem.getUri().toString());
+						// TODO: more than one match?
+						break;
 					}
 					annotation.put("tags", tags);
 				} else {
