@@ -384,15 +384,11 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 				log.debug("id = " + id);
 				
 				// check if archived
-				boolean include = true;
 				Identifier pid = new Identifier();
 				pid.setValue(id);
-				try {
-					include = !storageNode.getSystemMetadata(null, pid).getArchived();
-				} catch (Exception e) {
-					include = false;
-				}
-				if (!include) {
+				SystemMetadata sysMeta = storageNode.getSystemMetadata(session, pid);
+				// remember we don't have true delete yet
+				if ( (sysMeta.getArchived() != null && sysMeta.getArchived().booleanValue()) || sysMeta.getObsoletedBy() != null) {
 					continue;
 				}
 				
