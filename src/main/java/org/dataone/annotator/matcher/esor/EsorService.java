@@ -48,6 +48,9 @@ public class EsorService implements ConceptMatcher {
 	private static List<ConceptItem> lookupEsor(String query) throws Exception  {
 
 		HttpClient client = HttpClients.createDefault();
+		// remove quotes for now
+		// see: https://github.com/DataONEorg/sem-prov-design/issues/134
+		query = query.replaceAll("\"", "");
 		String uriStr = REST_URL + "?query=" + URLEncoder.encode(query, "UTF-8");
 		//System.out.println(uriStr);
 
