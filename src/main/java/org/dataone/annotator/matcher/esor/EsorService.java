@@ -32,7 +32,20 @@ public class EsorService implements ConceptMatcher {
 
 	@Override
 	public List<ConceptItem> getConcepts(String fullText) throws Exception {
-		return lookupEsor(fullText);
+		//merge two results with different escape condition
+		String query = parseTerm(fullText);
+		String escapedSpaceQuery = escapeToSpace(query);
+		String escapedCommaQuery = escapeToComma(query);
+
+		if(escapedSpaceQuery == escapedCommaQuery){
+			return lookupEsor(escapedSpaceQuery);
+		}else{
+			List<ConceptItem> res_escapedSpace = lookupEsor(escapedSpaceQuery);
+			List<ConceptItem> res_escapedComma = lookupEsor(escapedCommaQuery);
+			return mergeRes(res_escapedSpace, res_escapedComma);
+		}
+
+		//return lookupEsor(fullText);
 	}
 
 	@Override
@@ -42,7 +55,8 @@ public class EsorService implements ConceptMatcher {
 			sb.append(value);
 			sb.append(" ");
 		}
-		return lookupEsor(sb.toString());
+		//return lookupEsor(sb.toString());
+		return getConcepts(sb.toString());
 	}
 
 	private static List<ConceptItem> lookupEsor(String query) throws Exception  {
@@ -50,7 +64,7 @@ public class EsorService implements ConceptMatcher {
 		HttpClient client = HttpClients.createDefault();
 		// remove quotes for now
 		// see: https://github.com/DataONEorg/sem-prov-design/issues/134
-		query = query.replaceAll("\"", "");
+		//query = query.replaceAll("\"", "");
 		String uriStr = REST_URL + "?query=" + URLEncoder.encode(query, "UTF-8");
 		//System.out.println(uriStr);
 
@@ -82,11 +96,82 @@ public class EsorService implements ConceptMatcher {
 				ConceptItem c = new ConceptItem(new URI(url.substring(1, url.length() - 1)), Double.parseDouble(score));
 				concepts.add(c);
 			}else{
-				System.out.println("NA");
+				//System.out.println("NA");
 			}
-			
+
 		}
 
 		return concepts;
+	}
+
+
+	//escape input query
+	private String parseTerm(String str) throws Exception{
+
+		if(str.contains("(")){
+			str =  str.substring(0, str.indexOf("("));
+		}
+
+		str = str.replaceAll("\\s+$", "");
+
+		str = replaceFromSlashToSpace(replaceFromDotToSpace(replaceFromDashToSpace(str)));
+		str = str.replace("%", " percent");
+		str = insertSpaceBeforeCapital(str);
+		str = URLEncoder.encode(str, "UTF-8").replaceAll("\\+", "%20");
+		return str;
+	}
+
+	private String replaceFromDotToSpace(String str) {
+		return str.replace(".", " ");
+	}
+
+	private String replaceFromSlashToSpace(String str){
+		return str.replace("/", " ");
+	}
+
+	private String insertSpaceBeforeCapital(String str){
+		char[] charArr = str.toCharArray();
+		StringBuilder sb = new StringBuilder();
+		for(int i = 0 ; i < charArr.length; i++){
+			if(i>0 && charArr[i] >= 'A' && charArr[i] <= 'Z' && charArr[i-1] >= 'a'&& charArr[i-1] <= 'z')
+				sb.append(" ");
+			sb.append(charArr[i]);
+		}
+		return sb.toString();
+	}
+
+	private String replaceFromDashToSpace(String original){
+		return original.replace("_", " ");
+	}
+
+	private String escapeToSpace(String original){
+		return original.replace(" ", "%20");
+	}
+
+	private String escapeToComma(String original){
+		return original.replace("%20", ",");
+	}
+
+	private List<ConceptItem> mergeRes(List<ConceptItem> res_escapedSpace, List<ConceptItem> res_escapedComma) {
+		if(res_escapedSpace.size()==0) return res_escapedComma;
+		if(res_escapedComma.size()==0) return res_escapedSpace;
+
+		int indexS = 0;
+		int indexC = 0;
+		while(indexS < res_escapedSpace.size()){
+			if(indexC < res_escapedComma.size() && res_escapedComma.get(indexC).getWeight() >= res_escapedSpace.get(indexS).getWeight()){
+				res_escapedSpace.add(indexS, res_escapedComma.get(indexC));
+				indexS++;
+				indexC++;
+			}else{
+				indexS++;
+			}
+		}
+
+		for(int i = indexC; i < res_escapedComma.size(); i++ ){
+			res_escapedSpace.add(res_escapedComma.get(i));
+		}
+
+		return res_escapedSpace;
 	}
 }
