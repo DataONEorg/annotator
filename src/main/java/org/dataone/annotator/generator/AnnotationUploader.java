@@ -80,7 +80,13 @@ public class AnnotationUploader {
 				JSONObject annotation = (JSONObject) annotationIter.next();
 				String id = annotation.get("id").toString();
 				log.debug("deleting annotation: " + id);
-				store.delete(id);
+				try {
+					store.delete(id);
+				} catch (Exception e) {
+					// warn but forge on
+					log.warn(e.getMessage(), e);
+					continue;
+				}
 			}
 		}
 	}	
