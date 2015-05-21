@@ -204,14 +204,14 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 							}
 							annotation.put("tags", tags);
 							
+							// write the annotation out
+							StringWriter sw = new StringWriter();
+					    	annotation.writeJSONString(sw);
+							Identifier pid = new Identifier();
+							pid.setValue(annotation.get("id").toString());
+							annotations.put(pid, sw.toString());
+							
 						}
-						
-						// write the annotation out
-						StringWriter sw = new StringWriter();
-				    	annotation.writeJSONString(sw);
-						Identifier pid = new Identifier();
-						pid.setValue(annotation.get("id").toString());
-						annotations.put(pid, sw.toString());
 
 				    	// on to the next attribute
 						attributeCount++;
