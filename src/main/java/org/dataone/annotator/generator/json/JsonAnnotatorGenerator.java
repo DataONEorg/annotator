@@ -177,6 +177,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 				    	annotation.put("resource", xpointer);
 				    	annotation.put("quote", attributeName);
 				    	annotation.put("oa:Motivation", "oa:tagging");
+				    	annotation.put("source", conceptMatcher.getClass().getName());
 				    	
 				    	// target a (hopefully stable) div for the highlight
 						
@@ -329,6 +330,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 		    	annotation.put("resource", xpointer);
 		    	annotation.put("quote", attributeName);
 		    	annotation.put("oa:Motivation", "oa:tagging");
+		    	annotation.put("source", conceptMatcher.getClass().getName());
 		    	
 		    	// the range for the highlighted text
 		    	JSONObject range = new JSONObject();
