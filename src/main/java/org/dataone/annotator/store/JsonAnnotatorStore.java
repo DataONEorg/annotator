@@ -39,8 +39,6 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeType;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
-import org.dataone.service.types.v1.ObjectInfo;
-import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Service;
 import org.dataone.service.types.v1.Session;
@@ -280,7 +278,7 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 	 */
 	@Override
 	public String search(String query) throws Exception {
-		return searchIndex(query);
+		return searchIndex(query, false);
 		//return searchList(query);
 
 	}
@@ -326,7 +324,7 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 	 * @return
 	 * @throws Exception
 	 */
-	private String searchIndex(String query) throws Exception {
+	private String searchIndex(String query, boolean isList) throws Exception {
 		
 		String solrQuery = "q=" + URLEncoder.encode("formatId:\"" + ANNOTATION_FORMAT_ID + "\"", "UTF-8");
 
@@ -362,7 +360,7 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 		solrQuery += URLEncoder.encode("-obsoletedBy:*", "UTF-8");
 		
 		//more solr options
-		solrQuery += "&fl=id,sem_annotates,sem_annotated_by&wt=json&rows=1000";
+		solrQuery += "&fl=id,sem_annotates,sem_annotated_by&wt=json&rows=10000";
 		log.debug("solrQuery = " + solrQuery);
 
 		// search the index
@@ -384,13 +382,13 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 				log.debug("id = " + id);
 				
 				// check if archived
-				Identifier pid = new Identifier();
-				pid.setValue(id);
-				SystemMetadata sysMeta = storageNode.getSystemMetadata(session, pid);
-				// remember we don't have true delete yet
-				if ( (sysMeta.getArchived() != null && sysMeta.getArchived().booleanValue()) || sysMeta.getObsoletedBy() != null) {
-					continue;
-				}
+				// TODO: needed?
+//				Identifier pid = new Identifier();
+//				pid.setValue(id);
+//				SystemMetadata sysMeta = storageNode.getSystemMetadata(session, pid);
+//				if ( (sysMeta.getArchived() != null && sysMeta.getArchived().booleanValue()) || sysMeta.getObsoletedBy() != null) {
+//					continue;
+//				}
 				
 				String annotationContent = this.read(id);
 				JSONObject annotation = (JSONObject) JSONValue.parse(annotationContent);
@@ -401,11 +399,15 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 		}
 		
 		// apply additional filters for fields that may not be in the solr index
-		JSONObject results = new JSONObject();
-		
 		Predicate allPredicate = PredicateUtils.allPredicate(predicates);
 		CollectionUtils.filter(annotations, allPredicate);
 		
+		// reuse this method for search and index implementations
+		if (isList) {
+			return annotations.toJSONString();
+		}
+		
+		JSONObject results = new JSONObject();
 		results.put("total", annotations.size());
 		results.put("rows", annotations);
 
@@ -428,30 +430,8 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 	 */
 	@Override
 	public String index() throws Exception {
-		
-		JSONArray annotations = new JSONArray();
-		ObjectFormatIdentifier objectFormatId = new ObjectFormatIdentifier();
-		objectFormatId.setValue(ANNOTATION_FORMAT_ID);
-		Integer start = 0;
-		Integer count = 1000;
-		ObjectList objects = storageNode.listObjects(session, null, null, objectFormatId, null, true, start, count);
-		//ObjectList objects = storageNode.listObjects(session, null, null, objectFormatId, true, start, count);
-
-		if (objects != null && objects.getCount() > 0) {
-			for (ObjectInfo info: objects.getObjectInfoList()) {
-				Identifier pid = info.getIdentifier();
-				SystemMetadata sysMeta = storageNode.getSystemMetadata(session, pid);
-				// remember we don't have true delete yet
-				if ( (sysMeta.getArchived() != null && sysMeta.getArchived().booleanValue()) || sysMeta.getObsoletedBy() != null) {
-					continue;
-				}
-				String annotationContent = this.read(pid.getValue());
-				JSONObject annotation = (JSONObject) JSONValue.parse(annotationContent);
-				annotations.add(annotation);
-			}
-		}
-
-		return annotations.toJSONString();
+		String query = "limit=-1";
+		return searchIndex(query, true);
 	}
 
 	/* (non-Javadoc)
