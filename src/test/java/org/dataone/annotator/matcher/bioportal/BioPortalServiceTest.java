@@ -69,7 +69,7 @@ public class BioPortalServiceTest {
 			List<ConceptItem> results;
 			results = service.getConcepts(text);
 			String retConcept = results.get(0).getUri().toString();
-			assertEquals("http://purl.obolibrary.org/obo/CHEBI_27594", retConcept);
+			assertEquals("http://purl.obolibrary.org/obo/CHEBI_33415", retConcept);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
