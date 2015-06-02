@@ -9,6 +9,9 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
@@ -40,6 +43,11 @@ public class Annotator {
                 .hasArg()
                 .withDescription("use given file for pid listing")
                 .create("pidfile");
+		Option nThreads = 
+				OptionBuilder.withArgName("nThreads")
+                .hasArg()
+                .withDescription("use given number of threads")
+                .create("nThreads");
 		Option create = new Option("create", "generate the annotations");
 		Option remove = new Option("remove", "remove the annotations");
 		Option removeAll = new Option("removeAll", "remove ALL annotations");
@@ -49,6 +57,7 @@ public class Annotator {
 		options.addOption(remove);
 		options.addOption(removeAll);
 		options.addOption(pidFile);
+		options.addOption(nThreads);
 
 		return options;
 
@@ -81,7 +90,7 @@ public class Annotator {
 		
 		Settings.getConfiguration().setProperty("D1Client.CN_URL", "https://cn-sandbox-2.test.dataone.org/cn");
 		
-		Session session = setUpSession();
+		final Session session = setUpSession();
 		Options options = setUpOptions();
 		
         // parse the command line arguments
@@ -114,19 +123,63 @@ public class Annotator {
         	e.printStackTrace();
         }
 
+        final CommandLine cmdRef = cmd;
+        
         // create or remove annotations
-        try {
-	    	AnnotationUploader uploader = new AnnotationUploader(session);
-	        if (cmd.hasOption("create")) {
-				uploader.createAnnotationsFor(identifiers);
-	        } else if (cmd.hasOption("remove")) {
-	        	uploader.removeAnnotationsFor(identifiers);
-	        } else if (cmd.hasOption("removeAll")) {
-	        	uploader.removeAll();
-	        }
-        } catch (Exception e) {
-        	e.printStackTrace();
+        int nThreads = 1;
+        if (cmd.hasOption("nThreads")) {
+        	// how many threads
+        	nThreads = Integer.valueOf(cmd.getOptionValue("nThreads"));
         }
+        ExecutorService exec = Executors.newFixedThreadPool(nThreads);
+        
+        int size = identifiers.size();
+        int segment = size / nThreads;
+        int fromIndex = 0;
+        int toIndex = 0;
+		
+        while (toIndex < identifiers.size()) {
+        
+	        fromIndex = toIndex;
+        	toIndex = toIndex + segment;
+	        toIndex = Math.min(toIndex, size);
+	        
+	        final List<String> subList = identifiers.subList(fromIndex, toIndex);
+	        
+	        log.debug("processing sublist from: " + fromIndex + " to: " + toIndex);
+	        
+	        exec.execute(new Runnable() {
+				
+				@Override
+				public void run() {
+					try {
+				    	AnnotationUploader uploader = new AnnotationUploader(session);
+				        if (cmdRef.hasOption("create")) {
+							uploader.createAnnotationsFor(subList);
+				        } else if (cmdRef.hasOption("remove")) {
+				        	uploader.removeAnnotationsFor(subList);
+				        } else if (cmdRef.hasOption("removeAll")) {
+				        	uploader.removeAll();
+				        }
+			        } catch (Exception e) {
+			        	e.printStackTrace();
+			        }
+					
+				}
+			});
+	        
+	        
+        }
+        
+    	exec.shutdown();
+
+        try {
+			exec.awaitTermination(3, TimeUnit.HOURS);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			log.error(e.getMessage(), e);
+			e.printStackTrace();
+		}
 		
 	}
 
