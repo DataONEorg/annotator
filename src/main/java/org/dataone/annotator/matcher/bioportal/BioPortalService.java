@@ -36,7 +36,7 @@ public class BioPortalService implements ConceptMatcher {
     public BioPortalService() {
     	restUrl = Settings.getConfiguration().getString("annotator.matcher.bioportal.restUrl", "http://data.bioontology.org");
     	apiKey = Settings.getConfiguration().getString("annotator.matcher.bioportal.apiKey", "24e4775e-54e0-11e0-9d7b-005056aa3316");
-    	ontologies = Settings.getConfiguration().getString("annotator.matcher.bioportal.ontologies", "D1-CARBON-FLUX,PROV-ONE,ENVO,CHEBI,DATA-CITE,DC-TERMS,OWL-TIME");
+    	ontologies = Settings.getConfiguration().getString("annotator.matcher.bioportal.ontologies", "ECSO,PROV-ONE,ENVO,CHEBI,DATA-CITE,DC-TERMS,OWL-TIME");
 
     }
 
