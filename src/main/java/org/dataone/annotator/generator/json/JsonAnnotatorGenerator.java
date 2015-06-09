@@ -21,6 +21,8 @@ import org.dataone.annotator.generator.AnnotationGenerator;
 import org.dataone.annotator.matcher.ConceptItem;
 import org.dataone.annotator.matcher.ConceptMatcher;
 import org.dataone.annotator.matcher.ConceptMatcherFactory;
+import org.dataone.annotator.matcher.bioportal.BioPortalService;
+import org.dataone.annotator.matcher.esor.EsorService;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
 import org.dataone.service.types.v1.Identifier;
@@ -173,11 +175,21 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 						// for selecting particular part of the metadata
 						String xpointer = "#xpointer(/eml/dataset/dataTable[" + entityCount + "]/attributeList/attribute[" + attributeCount + "])";
 				    	
-				    	annotation.put("field", "sem_annotation");
+						// index using targeted field for the matching algorithm
+						String fieldName = "sem_annotation";
+						String matcher = conceptMatcher.getClass().getName();
+						if (conceptMatcher instanceof BioPortalService) {
+							fieldName = "sem_annotation_bioportal_sm";
+						}
+						if (conceptMatcher instanceof EsorService) {
+							fieldName = "sem_annotation_esor_sm";
+						}
+						
+				    	annotation.put("field", fieldName);
 				    	annotation.put("resource", xpointer);
 				    	annotation.put("quote", attributeName);
 				    	annotation.put("oa:Motivation", "oa:tagging");
-				    	annotation.put("source", conceptMatcher.getClass().getName());
+				    	annotation.put("source", matcher);
 				    	
 				    	// target a (hopefully stable) div for the highlight
 						
@@ -326,11 +338,21 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 				// for selecting particular part of the metadata
 				String xpointer = "#xpointer(//attribute[" + attributeCount + "])";
 		    	
-		    	annotation.put("field", "sem_annotation");
+				// index using targeted field for the matching algorithm
+				String fieldName = "sem_annotation";
+				String matcher = conceptMatcher.getClass().getName();
+				if (conceptMatcher instanceof BioPortalService) {
+					fieldName = "sem_annotation_bioportal_sm";
+				}
+				if (conceptMatcher instanceof EsorService) {
+					fieldName = "sem_annotation_esor_sm";
+				}
+				
+		    	annotation.put("field", fieldName);
 		    	annotation.put("resource", xpointer);
 		    	annotation.put("quote", attributeName);
 		    	annotation.put("oa:Motivation", "oa:tagging");
-		    	annotation.put("source", conceptMatcher.getClass().getName());
+		    	annotation.put("source", matcher);
 		    	
 		    	// the range for the highlighted text
 		    	JSONObject range = new JSONObject();
