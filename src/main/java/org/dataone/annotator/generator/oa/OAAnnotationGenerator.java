@@ -297,6 +297,7 @@ public class OAAnnotationGenerator extends AnnotationGenerator {
 		// parse the metadata
 		DataPackageParserInterface parser = new Eml200DataPackageParser();
 		parser.parse(emlStream);
+		emlStream.close();
 		DataPackage dataPackage = parser.getDataPackage();
 		return dataPackage;
 	}

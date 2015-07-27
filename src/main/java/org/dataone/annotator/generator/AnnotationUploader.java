@@ -45,21 +45,27 @@ public class AnnotationUploader {
 			log.debug("Generating annotations for: " + identifier);
 			Identifier pid = new Identifier();
 			pid.setValue(identifier);
-			Map<Identifier, String> annotations = generator.generateAnnotations(pid);
 			
-			Iterator<Entry<Identifier, String>> annotationIter = annotations.entrySet().iterator();
-			while (annotationIter.hasNext()) {
-				Entry<Identifier, String> entry = annotationIter.next();
-				Identifier annotationIdentifier = entry.getKey();
-				String annotationContent = entry.getValue();
-				log.debug("Annotation: " + annotationContent);
-				if (store.exists(annotationIdentifier.getValue())) {
-					log.debug("Updating annotation: " + annotationIdentifier.getValue());
-					store.update(annotationIdentifier.getValue(), annotationContent);
-				} else {
-					log.debug("Creating annotation: " + annotationIdentifier.getValue());
-					store.create(annotationContent);
+			try {
+				Map<Identifier, String> annotations = generator.generateAnnotations(pid);
+				
+				Iterator<Entry<Identifier, String>> annotationIter = annotations.entrySet().iterator();
+				while (annotationIter.hasNext()) {
+					Entry<Identifier, String> entry = annotationIter.next();
+					Identifier annotationIdentifier = entry.getKey();
+					String annotationContent = entry.getValue();
+					log.debug("Annotation: " + annotationContent);
+					if (store.exists(annotationIdentifier.getValue())) {
+						log.debug("Updating annotation: " + annotationIdentifier.getValue());
+						store.update(annotationIdentifier.getValue(), annotationContent);
+					} else {
+						log.debug("Creating annotation: " + annotationIdentifier.getValue());
+						store.create(annotationContent);
+					}
 				}
+			} catch (Exception e) {
+				log.warn(e.getMessage(), e);
+				continue;
 			}
 		}	
 	}

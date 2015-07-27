@@ -301,6 +301,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 	
         JSONParser jsonParser = new JSONParser();
         Object results = jsonParser.parse(solrStream);
+        solrStream.close();
         log.debug("results:" + results);
         JSONObject solrResults = (JSONObject) results;
         
@@ -501,6 +502,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 		// parse the metadata
 		DataPackageParserInterface parser = new Eml200DataPackageParser();
 		parser.parse(emlStream);
+		emlStream.close();
 		DataPackage dataPackage = parser.getDataPackage();
 		return dataPackage;
 	}
