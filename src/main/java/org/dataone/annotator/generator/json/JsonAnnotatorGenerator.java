@@ -159,15 +159,15 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 						attributeText.append(" ");
 						attributeText.append(attributeDefinition);
 						attributeText.append(" ");
-						attributeText.append(attributeType);
-						attributeText.append(" ");
-						attributeText.append(attributeScale);
-						attributeText.append(" ");
-						attributeText.append(attributeUnitType);
-						attributeText.append(" ");
+//						attributeText.append(attributeType);
+//						attributeText.append(" ");
+//						attributeText.append(attributeScale);
+//						attributeText.append(" ");
+//						attributeText.append(attributeUnitType);
+//						attributeText.append(" ");
 						attributeText.append(attributeUnit);
-						attributeText.append(" ");
-						attributeText.append(attributeDomain);
+//						attributeText.append(" ");
+//						attributeText.append(attributeDomain);
 						
 						// capture the annotation
 				    	JSONObject annotation = createAnnotationTemplate(metadataPid);
@@ -217,6 +217,20 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 								break;
 							}
 							annotation.put("tags", tags);
+							
+							// debug
+							for (ConceptItem conceptItem: concepts) {
+								// tab delimited for easy analysis afterward
+								log.info(
+										"Suggested annotation summary"
+										+ "\t" + metadataPid.getValue()
+										+ "\t" + entityCount
+										+ "\t" + attributeCount
+										+ "\t" + attributeText
+										+ "\t" + conceptItem.getUri().toString()
+										+ "\t" + conceptMatcher.getClass().getName()
+										);
+							}
 							
 							// write the annotation out
 							StringWriter sw = new StringWriter();
