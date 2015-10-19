@@ -81,10 +81,12 @@ public class AnnotatorRestServlet extends HttpServlet {
 			} catch (IOException e) {
 				log.warn(e.getMessage(), e);
 			}
-			log.debug("Session from x-annotator-auth-token: " + session);
+			log.warn("Session from x-annotator-auth-token: " + session);
 			
 			// set it for the client to use
 			D1Client.setAuthToken(token);
+			log.warn("Set authToken in D1Client: " + token);
+
 		}
 		
 		// see if we can proxy as the user

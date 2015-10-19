@@ -186,6 +186,9 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 		sysmeta.setIdentifier(pid);
 		sysmeta.setSeriesId(sid);
 		
+		log.warn("Session subject: " + session.getSubject().getValue());
+		log.warn("Creating annotation created by: " + sysmeta.getRightsHolder().getValue());
+		
 		// create it on the node
 		InputStream object = new ByteArrayInputStream(annotation.toJSONString().getBytes(DEFAULT_ENCODING));
 		storageNode.create(session, pid, object, sysmeta);
