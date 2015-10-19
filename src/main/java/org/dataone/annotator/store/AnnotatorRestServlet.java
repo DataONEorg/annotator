@@ -39,6 +39,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.client.auth.CertificateManager;
+import org.dataone.client.v2.itk.D1Client;
 import org.dataone.portal.PortalCertificateManager;
 import org.dataone.portal.TokenGenerator;
 import org.dataone.service.exceptions.BaseException;
@@ -81,6 +82,9 @@ public class AnnotatorRestServlet extends HttpServlet {
 				log.warn(e.getMessage(), e);
 			}
 			log.debug("Session from x-annotator-auth-token: " + session);
+			
+			// set it for the client to use
+			D1Client.setAuthToken(token);
 		}
 		
 		// see if we can proxy as the user
