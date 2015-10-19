@@ -74,9 +74,10 @@ public class AnnotatorRestServlet extends HttpServlet {
 			}
 			log.warn("Session from x-annotator-auth-token: " + session);
 			
+			// TODO: can't proxy as this because token set by static method on D1Client
 			// set it for the client to use
-			D1Client.setAuthToken(token);
-			log.warn("Set authToken in D1Client: " + token);
+			//D1Client.setAuthToken(token);
+			//log.warn("Set authToken in D1Client: " + token);
 
 		}
 		
@@ -92,34 +93,34 @@ public class AnnotatorRestServlet extends HttpServlet {
 		}
 		
 		// see if we can proxy as the user
-//		if (session != null) {
-//			try {
-//				
-//				log.warn("looking up certificate from portal");
-//				
-//				// register the portal certificate with the certificate manager for the calling subject
-//				X509Certificate certificate = PortalCertificateManager.getInstance().getCertificate(request);
-//				PrivateKey key = PortalCertificateManager.getInstance().getPrivateKey(request);
-//				String certSubject = CertificateManager.getInstance().getSubjectDN(certificate);
-//				String sessionSubject = session.getSubject().getValue();
-//
-//				// TODO: verify that the users are the same
-//				log.warn("Certifcate subject: " + certSubject);
-//				log.warn("Session subject: " + sessionSubject);
-//
-//				// now the methods will "know" who is calling them - used in conjunction with Certificate Manager
-//				CertificateManager.getInstance().registerCertificate(certSubject , certificate, key);
-//				log.warn("Registered portal certificate for: " + certSubject);
-//
-//				session = new Session();
-//				Subject subject = new Subject();
-//				subject.setValue(certSubject);
-//				session.setSubject(subject);
-//				
-//			} catch (Exception e) {
-//				log.error("cound not register user session from portal: " + e.getMessage(), e);
-//			}
-//		}
+		if (session != null) {
+			try {
+				
+				log.warn("looking up certificate from portal");
+				
+				// register the portal certificate with the certificate manager for the calling subject
+				X509Certificate certificate = PortalCertificateManager.getInstance().getCertificate(request);
+				PrivateKey key = PortalCertificateManager.getInstance().getPrivateKey(request);
+				String certSubject = CertificateManager.getInstance().getSubjectDN(certificate);
+				String sessionSubject = session.getSubject().getValue();
+
+				// TODO: verify that the users are the same
+				log.warn("Certifcate subject: " + certSubject);
+				log.warn("Session subject: " + sessionSubject);
+
+				// now the methods will "know" who is calling them - used in conjunction with Certificate Manager
+				CertificateManager.getInstance().registerCertificate(certSubject , certificate, key);
+				log.warn("Registered portal certificate for: " + certSubject);
+
+				session = new Session();
+				Subject subject = new Subject();
+				subject.setValue(certSubject);
+				session.setSubject(subject);
+				
+			} catch (Exception e) {
+				log.error("cound not register user session from portal: " + e.getMessage(), e);
+			}
+		}
 		
 		// NOTE: if session is null at this point, we are default to whatever CertificateManager has
 		// which may not be the original user from the web
