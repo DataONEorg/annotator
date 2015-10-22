@@ -24,7 +24,6 @@ package org.dataone.annotator.store;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.Enumeration;
 
@@ -39,13 +38,10 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.client.auth.CertificateManager;
-import org.dataone.client.v2.itk.D1Client;
 import org.dataone.portal.PortalCertificateManager;
 import org.dataone.portal.TokenGenerator;
 import org.dataone.service.exceptions.BaseException;
-import org.dataone.service.exceptions.InvalidToken;
 import org.dataone.service.types.v1.Session;
-import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
 
 /**
@@ -74,14 +70,9 @@ public class AnnotatorRestServlet extends HttpServlet {
 			}
 			log.warn("Session from x-annotator-auth-token: " + session);
 			
-			// TODO: can't proxy as this because token set by static method on D1Client
-			// set it for the client to use
-			//D1Client.setAuthToken(token);
-			//log.warn("Set authToken in D1Client: " + token);
-
 		}
 		
-		// look for certificate-based session (d1 default) 
+		// if we don't have a session yet, look for certificate-based session (d1 default) 
 		if (session == null) {
 				try {
 					session = PortalCertificateManager.getInstance().getSession(request);
@@ -90,36 +81,6 @@ public class AnnotatorRestServlet extends HttpServlet {
 				} catch (Exception e) {
 					log.warn(e.getMessage(), e);
 				}
-		}
-		
-		// see if we can proxy as the user
-		if (session != null) {
-			try {
-				
-				log.warn("looking up certificate from portal");
-				
-				// register the portal certificate with the certificate manager for the calling subject
-				X509Certificate certificate = PortalCertificateManager.getInstance().getCertificate(request);
-				PrivateKey key = PortalCertificateManager.getInstance().getPrivateKey(request);
-				String certSubject = CertificateManager.getInstance().getSubjectDN(certificate);
-				String sessionSubject = session.getSubject().getValue();
-
-				// TODO: verify that the users are the same
-				log.warn("Certifcate subject: " + certSubject);
-				log.warn("Session subject: " + sessionSubject);
-
-				// now the methods will "know" who is calling them - used in conjunction with Certificate Manager
-				CertificateManager.getInstance().registerCertificate(certSubject , certificate, key);
-				log.warn("Registered portal certificate for: " + certSubject);
-
-				session = new Session();
-				Subject subject = new Subject();
-				subject.setValue(certSubject);
-				session.setSubject(subject);
-				
-			} catch (Exception e) {
-				log.error("cound not register user session from portal: " + e.getMessage(), e);
-			}
 		}
 		
 		// NOTE: if session is null at this point, we are default to whatever CertificateManager has
