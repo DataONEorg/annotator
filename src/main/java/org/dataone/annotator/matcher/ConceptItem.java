@@ -6,6 +6,10 @@ public class ConceptItem {
 
 	protected URI uri;
 	
+	protected String label;
+	
+	protected String definition;
+	
 	protected double weight;
 	
 	public ConceptItem() {}
@@ -29,6 +33,22 @@ public class ConceptItem {
 
 	public void setWeight(double weight) {
 		this.weight = weight;
+	}
+
+	public String getLabel() {
+		return label;
+	}
+
+	public void setLabel(String label) {
+		this.label = label;
+	}
+
+	public String getDefinition() {
+		return definition;
+	}
+
+	public void setDefinition(String definition) {
+		this.definition = definition;
 	}
 	
 

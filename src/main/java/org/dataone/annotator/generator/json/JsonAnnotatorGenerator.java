@@ -118,6 +118,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
     private Map<Identifier, String> generateAnnotationsFromEML(Identifier metadataPid) throws Exception {
     	
     	DataPackage dataPackage = this.getDataPackage(metadataPid);
+    	SystemMetadata sysMeta = D1Client.getCN().getSystemMetadata(null, metadataPid);
     	
 		Map<Identifier, String> annotations = new HashMap<Identifier, String>();
 		
@@ -170,7 +171,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 //						attributeText.append(attributeDomain);
 						
 						// capture the annotation
-				    	JSONObject annotation = createAnnotationTemplate(metadataPid);
+				    	JSONObject annotation = createAnnotationTemplate(sysMeta);
 				    	
 						// for selecting particular part of the metadata
 						String xpointer = "#xpointer(/eml/dataset/dataTable[" + entityCount + "]/attributeList/attribute[" + attributeCount + "])";
@@ -228,6 +229,8 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 										+ "\t" + attributeCount
 										+ "\t" + attributeText
 										+ "\t" + conceptItem.getUri().toString()
+										+ "\t" + conceptItem.getLabel()
+										+ "\t" + conceptItem.getDefinition()
 										+ "\t" + conceptMatcher.getClass().getName()
 										);
 							}
@@ -259,7 +262,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 				String creatorText = creators.get(0).getOrganization() + " " + creators.get(0).getSurName() + " " + creators.get(0).getGivenNames();
 				List<ConceptItem> concepts = orcidMatcher.getConcepts(creatorText);
 				if (concepts != null) {
-					JSONObject annotation = createAnnotationTemplate(metadataPid);
+					JSONObject annotation = createAnnotationTemplate(sysMeta);
 					JSONArray creatorTags = new JSONArray();
 					for (ConceptItem item: concepts) {
 						String orcidUri = item.getUri().toString();
@@ -327,6 +330,8 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
         	log.warn(e.getMessage(), e);
         	return null;
         }
+        
+    	SystemMetadata sysMeta = D1Client.getCN().getSystemMetadata(null, metadataPid);
     	 
 		Map<Identifier, String> annotations = new HashMap<Identifier, String>();
 		
@@ -348,7 +353,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 				//log.debug("Attribute text: " + attributeText);
 
 				// capture the annotation
-		    	JSONObject annotation = createAnnotationTemplate(metadataPid);
+		    	JSONObject annotation = createAnnotationTemplate(sysMeta);
 		    	
 				// for selecting particular part of the metadata
 				String xpointer = "#xpointer(//attribute[" + attributeCount + "])";
@@ -419,7 +424,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 				String creatorText = creator;
 				List<ConceptItem> concepts = orcidMatcher.getConcepts(creatorText);
 				if (concepts != null && concepts.size() > 0) {
-					JSONObject annotation = createAnnotationTemplate(metadataPid);
+					JSONObject annotation = createAnnotationTemplate(sysMeta);
 					JSONArray creatorTags = new JSONArray();
 					for (ConceptItem item: concepts) {
 						String orcidUri = item.getUri().toString();
@@ -459,9 +464,8 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 		
 	}
 	
-	private JSONObject createAnnotationTemplate(Identifier metadataPid) throws Exception {
+	private JSONObject createAnnotationTemplate(SystemMetadata sysMeta) throws Exception {
 		
-    	SystemMetadata sysMeta = D1Client.getCN().getSystemMetadata(null, metadataPid);
 
 		// reusable fields for each annotation we generated
     	JSONObject annotation = new JSONObject();
@@ -472,8 +476,8 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 		annotationPid.setValue(uuid);
 		
     	annotation.put("id", annotationPid.getValue());
-    	annotation.put("pid", metadataPid.getValue());
-    	annotation.put("uri", Settings.getConfiguration().getProperty("D1Client.CN_URL") + "/v2/resolve/" + metadataPid.getValue());
+    	annotation.put("pid", sysMeta.getIdentifier().getValue());
+    	annotation.put("uri", Settings.getConfiguration().getProperty("D1Client.CN_URL") + "/v2/resolve/" + sysMeta.getIdentifier().getValue());
     	annotation.put("consumer", Settings.getConfiguration().getProperty("annotator.consumerKey"));
     	
     	// TODO: transfer all permissions from sysmeta?

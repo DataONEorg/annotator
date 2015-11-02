@@ -17,12 +17,12 @@ import org.dataone.annotator.matcher.ConceptItem;
 import org.dataone.annotator.matcher.ConceptMatcher;
 import org.dataone.configuration.Settings;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.hp.hpl.jena.ontology.ConversionException;
 import com.hp.hpl.jena.ontology.OntClass;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 public class BioPortalService implements ConceptMatcher {
 	
@@ -36,20 +36,13 @@ public class BioPortalService implements ConceptMatcher {
     public BioPortalService() {
     	restUrl = Settings.getConfiguration().getString("annotator.matcher.bioportal.restUrl", "http://data.bioontology.org");
     	apiKey = Settings.getConfiguration().getString("annotator.matcher.bioportal.apiKey", "24e4775e-54e0-11e0-9d7b-005056aa3316");
-    	ontologies = Settings.getConfiguration().getString("annotator.matcher.bioportal.ontologies", "ECSO,PROV-ONE,ENVO,CHEBI,DATA-CITE,DC-TERMS,OWL-TIME");
+    	ontologies = Settings.getConfiguration().getString("annotator.matcher.bioportal.ontologies", "ECSO,PROV-ONE,DATA-CITE,DC-TERMS,OWL-TIME");
 
     }
 
     @Override
     public List<ConceptItem> getConcepts(String text) throws Exception {
-    	List <ConceptItem> concepts = new ArrayList<ConceptItem>();
-    	List<Resource> resources = lookupAnnotationClasses(null, text, ontologies);
-    	int i = resources.size();
-    	for (Resource resource: resources) {
-    		double rank = i--/resources.size();
-    		ConceptItem concept = new ConceptItem(new URI(resource.getURI()), rank);
-    		concepts.add(concept);
-    	}
+    	List<ConceptItem> concepts = lookupAnnotationClasses(null, text, ontologies);    	
     	return concepts;
     	
     }
@@ -70,19 +63,19 @@ public class BioPortalService implements ConceptMatcher {
 	 * @param text
 	 * @return
 	 */
-	private List<Resource> lookupAnnotationClasses(OntClass superClass, String text, String ontologies) {
+	private List<ConceptItem> lookupAnnotationClasses(OntClass superClass, String text, String ontologies) {
 		
 		// no point calling the service
 		if (text == null || text.length() == 0) {
 			return null;
 		}
 		
-		List<Resource> results = new ArrayList<Resource>();
+		List<ConceptItem> results = new ArrayList<ConceptItem>();
 		
 		try {
 			
 			String urlParameters = "apikey=" + apiKey;
-			urlParameters += "&format=xml";
+			urlParameters += "&format=xml&include=prefLabel,definition";
 			if (ontologies != null) {
 				urlParameters += "&ontologies=" + ontologies;
 			}
@@ -92,17 +85,39 @@ public class BioPortalService implements ConceptMatcher {
 			URL restURL = new URL(url);
 			InputStream is = restURL.openStream();
 			Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is);
-			NodeList classNodeList = XPathAPI.selectNodeList(doc, "//annotation/annotatedClass/id");
+			NodeList classNodeList = XPathAPI.selectNodeList(doc, "//annotation/annotatedClass");
+
 			//NodeList classNodeList = XMLUtilities.getNodeListWithXPath(doc, "//annotation/annotatedClass/id");
 			if (classNodeList != null && classNodeList.getLength() > 0) {
+				log.info("annotato suggested concept count: " + classNodeList.getLength());
+
 				for (int i = 0; i < classNodeList.getLength(); i++) {
-					String classURI = classNodeList.item(i).getFirstChild().getNodeValue();
+					Node annotatedClassNode = classNodeList.item(i);
+					
+					String classURI = XPathAPI.selectSingleNode(annotatedClassNode, "id").getFirstChild().getNodeValue();
 					log.info("annotator suggested: " + classURI);
 
+					//double rank = i--/classNodeList.getLength();
 					
+					// for returning the structure
+					ConceptItem concept = new ConceptItem();
+					concept.setUri(new URI(classURI));
+					//concept.setWeight(rank);
+					
+					// check for label and definition
+					Node labelNode = XPathAPI.selectSingleNode(annotatedClassNode, "prefLabel");
+					if (labelNode != null) {
+						concept.setLabel(labelNode.getFirstChild().getNodeValue());
+					}
+					Node defNode = XPathAPI.selectSingleNode(annotatedClassNode, "definitionCollection/definition");
+					if (defNode != null) {
+						concept.setDefinition(defNode.getFirstChild().getNodeValue());
+					}
+					
+					// are we filtering based on super class?
 					if (superClass == null) {
 						// just add the suggestion to the list
-						results.add(ResourceFactory.createResource(classURI));
+						results.add(concept);
 					} else {
 						// check that it is a subclass of superClass
 						Resource subclass = superClass.getModel().getResource(classURI);
@@ -116,7 +131,7 @@ public class BioPortalService implements ConceptMatcher {
 						}
 						// now we can add this class
 						if (isSubclass) {
-							results.add(subclass);
+							results.add(concept);
 						}
 					}
 					
