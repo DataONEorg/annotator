@@ -203,7 +203,29 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 				    	JSONArray ranges = new JSONArray();
 				    	ranges.add(range);
 						annotation.put("ranges", ranges);
-				    			
+						
+						// just log for MOB's template
+						/*********/
+						boolean printTemplate = false;
+						if (printTemplate) {
+							log.info(
+									"Manual annotation template"
+									+ "\t" + metadataPid.getValue()
+									+ "\t" + entityCount
+									+ "\t" + attributeCount
+									+ "\t" + attributeText
+									+ "\t" + xpointer
+									+ "\t" + range.toString()
+									+ "\t" + conceptMatcher.getClass().getName()
+									);
+				    	
+							// skip to next
+							attributeCount++;
+							continue;
+						}
+						/*********/
+
+						
 						// look up concepts for all the attribute text we have
 						// TODO: refine this for better matching
 						List<ConceptItem> concepts = conceptMatcher.getConcepts(attributeText.toString());
