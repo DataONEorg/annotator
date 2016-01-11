@@ -160,49 +160,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 						attributeText.append(" ");
 						attributeText.append(attributeDefinition);
 						attributeText.append(" ");
-//						attributeText.append(attributeType);
-//						attributeText.append(" ");
-//						attributeText.append(attributeScale);
-//						attributeText.append(" ");
-//						attributeText.append(attributeUnitType);
-//						attributeText.append(" ");
-						attributeText.append(attributeUnit);
-//						attributeText.append(" ");
-//						attributeText.append(attributeDomain);
-						
-						// capture the annotation
-				    	JSONObject annotation = createAnnotationTemplate(sysMeta);
-				    	
-						// for selecting particular part of the metadata
-						String xpointer = "#xpointer(/eml/dataset/dataTable[" + entityCount + "]/attributeList/attribute[" + attributeCount + "])";
-				    	
-						// index using targeted field for the matching algorithm
-						String fieldName = "sem_annotation";
-						String matcher = conceptMatcher.getClass().getName();
-						if (conceptMatcher instanceof BioPortalService) {
-							fieldName = "sem_annotation_bioportal_sm";
-						}
-						if (conceptMatcher instanceof EsorService) {
-							fieldName = "sem_annotation_esor_sm";
-						}
-						
-				    	annotation.put("field", fieldName);
-				    	annotation.put("resource", xpointer);
-				    	annotation.put("quote", attributeName);
-				    	annotation.put("oa:Motivation", "oa:tagging");
-				    	annotation.put("source", matcher);
-				    	
-				    	// target a (hopefully stable) div for the highlight
-						
-				    	// the range for the highlighted text
-				    	JSONObject range = new JSONObject();
-				    	range.put("start", "//*[@id='entity_" + entityCount + "_attribute_" + attributeCount + "']/div[1]/div[1]");
-				    	range.put("end", "//*[@id='entity_" + entityCount + "_attribute_" + attributeCount + "']/div[1]/div[1]");
-				    	range.put("startOffset", 0);
-				    	range.put("endOffset", attributeName.length());
-				    	JSONArray ranges = new JSONArray();
-				    	ranges.add(range);
-						annotation.put("ranges", ranges);
+						attributeText.append(attributeUnit);			    	
 						
 						// just log for MOB's template
 						/*********/
@@ -214,8 +172,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 									+ "\t" + entityCount
 									+ "\t" + attributeCount
 									+ "\t" + attributeText
-									+ "\t" + xpointer
-									+ "\t" + range.toString()
+									+ "\t" + attributeName
 									+ "\t" + conceptMatcher.getClass().getName()
 									);
 				    	
@@ -227,19 +184,8 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 
 						
 						// look up concepts for all the attribute text we have
-						// TODO: refine this for better matching
 						List<ConceptItem> concepts = conceptMatcher.getConcepts(attributeText.toString());
-						
 						if (concepts != null && concepts.size() > 0) {
-
-							// add the concept[s] as tag[s]
-							JSONArray tags = new JSONArray();
-							for (ConceptItem conceptItem: concepts) {
-								tags.add(conceptItem.getUri().toString());
-								// TODO: more than one match?
-								break;
-							}
-							annotation.put("tags", tags);
 							
 							// debug
 							for (ConceptItem conceptItem: concepts) {
@@ -256,14 +202,24 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 										+ "\t" + conceptMatcher.getClass().getName()
 										);
 							}
+						
 							
+							// construct the annotation with this information
+							JSONObject annotation = 
+									constructAttributeAnnotation(
+											sysMeta, 
+											entityCount, 
+											attributeCount, 
+											attributeName, 
+											concepts);
+								
 							// write the annotation out
 							StringWriter sw = new StringWriter();
 					    	annotation.writeJSONString(sw);
 							Identifier pid = new Identifier();
 							pid.setValue(annotation.get("id").toString());
 							annotations.put(pid, sw.toString());
-							
+						
 						}
 
 				    	// on to the next attribute
@@ -323,6 +279,66 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 		return annotations;
 		
 	}
+    
+    private JSONObject constructAttributeAnnotation(
+    		SystemMetadata sysMeta, 
+    		int entityCount, 
+    		int attributeCount, 
+    		String attributeName, 
+    		List<ConceptItem> concepts) throws Exception {
+    	
+    	// capture the annotation
+    	JSONObject annotation = createAnnotationTemplate(sysMeta);
+    	
+		// for selecting particular part of the metadata
+		String xpointer = "#xpointer(/eml/dataset/dataTable[" + entityCount + "]/attributeList/attribute[" + attributeCount + "])";
+    	
+		// index using targeted field for the matching algorithm
+		String fieldName = "sem_annotation";
+		String matcher = conceptMatcher.getClass().getName();
+		if (conceptMatcher instanceof BioPortalService) {
+			fieldName = "sem_annotation_bioportal_sm";
+		}
+		if (conceptMatcher instanceof EsorService) {
+			fieldName = "sem_annotation_esor_sm";
+		}
+		
+    	annotation.put("field", fieldName);
+    	annotation.put("resource", xpointer);
+    	annotation.put("quote", attributeName);
+    	annotation.put("oa:Motivation", "oa:tagging");
+    	annotation.put("source", matcher);
+    	
+    	// target a (hopefully stable) div for the highlight
+		
+    	// the range for the highlighted text
+    	JSONObject range = new JSONObject();
+    	range.put("start", "//*[@id='entity_" + entityCount + "_attribute_" + attributeCount + "']/div[1]/div[1]");
+    	range.put("end", "//*[@id='entity_" + entityCount + "_attribute_" + attributeCount + "']/div[1]/div[1]");
+    	range.put("startOffset", 0);
+    	range.put("endOffset", attributeName.length());
+    	JSONArray ranges = new JSONArray();
+    	ranges.add(range);
+		annotation.put("ranges", ranges);
+		
+		if (concepts != null && concepts.size() > 0) {
+
+			// add the concept[s] as tag[s]
+			JSONArray tags = new JSONArray();
+			for (ConceptItem conceptItem: concepts) {
+				tags.add(conceptItem.getUri().toString());
+				// TODO: more than one match?
+				//break;
+			}
+			annotation.put("tags", tags);
+
+			return annotation;
+		}
+		
+		return null;
+
+    }
+    
     
     /**
      * Generates annotations from SOLR index entry
@@ -421,6 +437,8 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 					// no annotation for things without tags
 					continue;
 				}
+				
+				
 				
 				// write the annotation out
 				StringWriter sw = new StringWriter();
