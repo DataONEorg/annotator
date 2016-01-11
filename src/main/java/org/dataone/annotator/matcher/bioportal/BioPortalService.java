@@ -89,7 +89,7 @@ public class BioPortalService implements ConceptMatcher {
 
 			//NodeList classNodeList = XMLUtilities.getNodeListWithXPath(doc, "//annotation/annotatedClass/id");
 			if (classNodeList != null && classNodeList.getLength() > 0) {
-				log.info("annotato suggested concept count: " + classNodeList.getLength());
+				log.info("annotator suggested concept count: " + classNodeList.getLength());
 
 				for (int i = 0; i < classNodeList.getLength(); i++) {
 					Node annotatedClassNode = classNodeList.item(i);
