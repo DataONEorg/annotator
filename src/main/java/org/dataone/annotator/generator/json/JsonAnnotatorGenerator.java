@@ -313,8 +313,8 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 		
     	// the range for the highlighted text
     	JSONObject range = new JSONObject();
-    	range.put("start", "//*[@id='sem_entity_" + entityCount + "_attribute_" + attributeCount + "']/div[1]/div[1]");
-    	range.put("end", "//*[@id='sem_entity_" + entityCount + "_attribute_" + attributeCount + "']/div[1]/div[1]");
+    	range.put("start", "//*[@id='sem_entity_" + entityCount + "_attribute_" + attributeCount + "']");
+    	range.put("end", "//*[@id='sem_entity_" + entityCount + "_attribute_" + attributeCount + "']");
     	range.put("startOffset", 0);
     	range.put("endOffset", attributeName.length());
     	JSONArray ranges = new JSONArray();
