@@ -27,7 +27,7 @@ public class EsorService implements ConceptMatcher {
 	//private static final String REST_URL = "http://127.0.0.1:9100/search";
 
 	//temporary server for testing
-	private static final String REST_URL = "http://esor.tw.rpi.edu/annotate/search";
+	private static final String REST_URL = "https://esor.tw.rpi.edu/annotate/annotate";
 
 
 	@Override
@@ -37,7 +37,7 @@ public class EsorService implements ConceptMatcher {
 		String escapedSpaceQuery = escapeToSpace(query);
 		String escapedCommaQuery = escapeToComma(query);
 
-		if(escapedSpaceQuery == escapedCommaQuery){
+		if(true){
 			return lookupEsor(escapedSpaceQuery);
 		}else{
 			List<ConceptItem> res_escapedSpace = lookupEsor(escapedSpaceQuery);
@@ -65,11 +65,12 @@ public class EsorService implements ConceptMatcher {
 		// remove quotes for now
 		// see: https://github.com/DataONEorg/sem-prov-design/issues/134
 		//query = query.replaceAll("\"", "");
-		String uriStr = REST_URL + "?query=" + URLEncoder.encode(query, "UTF-8");
-		//System.out.println(uriStr);
+		//String uriStr = REST_URL + "?query=" + URLEncoder.encode(query, "UTF-8");
+		String uriStr = REST_URL + "?query=" + query;
+		System.out.println("uriStr=" + uriStr);
 
 		HttpGet method = new HttpGet(uriStr);
-		method.setHeader("Accept", "application/json");
+		method.setHeader("Accept", "*/*");
 		HttpResponse response = client.execute(method);
 		int code = response.getStatusLine().getStatusCode();
 		if (2 != code / 100) {
@@ -77,7 +78,7 @@ public class EsorService implements ConceptMatcher {
 			}
 		InputStream body = response.getEntity().getContent();
 		String jsonStr = IOUtils.toString(body, "UTF-8");
-		System.out.println(jsonStr);
+		System.out.println("jsonStr=" + jsonStr);
 
 		JSONObject json = new JSONObject(jsonStr);
 		//String query = json.getString("query");
@@ -85,18 +86,22 @@ public class EsorService implements ConceptMatcher {
 
 		//analysis the result and return
 		ArrayList<ConceptItem> concepts = new ArrayList<ConceptItem>();
-		for(int i = 0; i < results.length(); i++){
+		for (int i = 0; i < results.length(); i++){
 			JSONObject r = results.getJSONObject(i);
-			String url = r.getString("url");
-			String score = r.getString("score");
-			System.out.println("url=" + url + ", score=" + score);
+			JSONArray annotations = r.getJSONArray("annotations");
+			for (int j = 0; j < annotations.length(); j++) {
+				JSONObject a = annotations.getJSONObject(j);
+				String url = a.getString("url");
+				String score = a.getString("score");
+				System.out.println("url=" + url + ", score=" + score);
 
-			//returned result may be empty
-			if(url.length()>0) {
-				ConceptItem c = new ConceptItem(new URI(url.substring(1, url.length() - 1)), Double.parseDouble(score));
-				concepts.add(c);
-			}else{
-				//System.out.println("NA");
+				//returned result may be empty
+				if(url.length()>0) {
+					ConceptItem c = new ConceptItem(new URI(url), Double.parseDouble(score));
+					concepts.add(c);
+				} else{
+					//System.out.println("NA");
+				}
 			}
 
 		}
