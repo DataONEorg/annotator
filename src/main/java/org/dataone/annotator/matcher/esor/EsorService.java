@@ -67,7 +67,7 @@ public class EsorService implements ConceptMatcher {
 		//query = query.replaceAll("\"", "");
 		//String uriStr = REST_URL + "?query=" + URLEncoder.encode(query, "UTF-8");
 		String uriStr = REST_URL + "?query=" + query;
-		System.out.println("uriStr=" + uriStr);
+		log.debug("uriStr=" + uriStr);
 
 		HttpGet method = new HttpGet(uriStr);
 		method.setHeader("Accept", "*/*");
@@ -78,7 +78,7 @@ public class EsorService implements ConceptMatcher {
 			}
 		InputStream body = response.getEntity().getContent();
 		String jsonStr = IOUtils.toString(body, "UTF-8");
-		System.out.println("jsonStr=" + jsonStr);
+		log.debug("jsonStr=" + jsonStr);
 
 		JSONObject json = new JSONObject(jsonStr);
 		//String query = json.getString("query");
