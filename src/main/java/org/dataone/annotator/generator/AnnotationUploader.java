@@ -54,20 +54,25 @@ public class AnnotationUploader {
 					Entry<Identifier, String> entry = annotationIter.next();
 					Identifier annotationIdentifier = entry.getKey();
 					String annotationContent = entry.getValue();
-					log.debug("Annotation: " + annotationContent);
-					if (store.exists(annotationIdentifier.getValue())) {
-						log.debug("Updating annotation: " + annotationIdentifier.getValue());
-						store.update(annotationIdentifier.getValue(), annotationContent);
-					} else {
-						log.debug("Creating annotation: " + annotationIdentifier.getValue());
-						store.create(annotationContent);
-					}
+					// add to the store
+					this.insertOrUpdate(annotationIdentifier, annotationContent);
 				}
 			} catch (Exception e) {
 				log.warn(e.getMessage(), e);
 				continue;
 			}
 		}	
+	}
+	
+	public void insertOrUpdate(Identifier annotationIdentifier, String annotationContent) throws Exception {
+		log.debug("Annotation: " + annotationContent);
+		if (store.exists(annotationIdentifier.getValue())) {
+			log.debug("Updating annotation: " + annotationIdentifier.getValue());
+			store.update(annotationIdentifier.getValue(), annotationContent);
+		} else {
+			log.debug("Creating annotation: " + annotationIdentifier.getValue());
+			store.create(annotationContent);
+		}
 	}
 	
 	public void removeAnnotationsFor(List<String> identifiers) throws Exception {

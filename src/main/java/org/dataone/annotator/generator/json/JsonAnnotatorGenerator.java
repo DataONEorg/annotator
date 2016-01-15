@@ -280,7 +280,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 		
 	}
     
-    private JSONObject constructAttributeAnnotation(
+    public JSONObject constructAttributeAnnotation(
     		SystemMetadata sysMeta, 
     		int entityCount, 
     		int attributeCount, 

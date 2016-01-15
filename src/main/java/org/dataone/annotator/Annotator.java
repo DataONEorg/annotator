@@ -30,6 +30,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.annotator.generator.AnnotationUploader;
+import org.dataone.annotator.generator.ManualAnnotationGenerator;
 import org.dataone.client.auth.CertificateManager;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
@@ -55,6 +56,7 @@ public class Annotator {
 		Option createAll = new Option("createAll", "create annotations for ALL content");
 		Option remove = new Option("remove", "remove the annotations");
 		Option removeAll = new Option("removeAll", "remove ALL annotations");
+		Option manual = new Option("manual", "create manual annotations");
 
 		Options options = new Options();
 		
@@ -62,6 +64,7 @@ public class Annotator {
 		options.addOption(createAll);
 		options.addOption(remove);
 		options.addOption(removeAll);
+		options.addOption(manual);
 		options.addOption(pidFile);
 		options.addOption(nThreads);
 
@@ -114,6 +117,17 @@ public class Annotator {
 		List<String> identifiers = new ArrayList<String>();
         try {
 	        if (cmd.hasOption("pidfile")) {
+	        	
+	        	// for manual annotation file
+		        if (cmd.hasOption("manual")) {
+		        	String pidFile = cmd.getOptionValue("pidfile");
+		        	ManualAnnotationGenerator man = new ManualAnnotationGenerator(session);
+		        	man.generateAndUpload(pidFile);
+		        	return;
+		        }
+		        
+	        	// otherwise, create or remove options...
+		        
 	        	// read the pids from this file
 	        	String pidFile = cmd.getOptionValue("pidfile");
 	        	URL url = new URL(pidFile);
@@ -131,8 +145,6 @@ public class Annotator {
         } catch (Exception e) {
         	e.printStackTrace();
         }
-        
-        
 
         final CommandLine cmdRef = cmd;
         
