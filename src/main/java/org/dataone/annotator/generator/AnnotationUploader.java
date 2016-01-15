@@ -64,15 +64,17 @@ public class AnnotationUploader {
 		}	
 	}
 	
-	public void insertOrUpdate(Identifier annotationIdentifier, String annotationContent) throws Exception {
+	public String insertOrUpdate(Identifier annotationIdentifier, String annotationContent) throws Exception {
+		String id = null;
 		log.debug("Annotation: " + annotationContent);
 		if (store.exists(annotationIdentifier.getValue())) {
 			log.debug("Updating annotation: " + annotationIdentifier.getValue());
-			store.update(annotationIdentifier.getValue(), annotationContent);
+			id = store.update(annotationIdentifier.getValue(), annotationContent);
 		} else {
 			log.debug("Creating annotation: " + annotationIdentifier.getValue());
-			store.create(annotationContent);
+			id = store.create(annotationContent);
 		}
+		return id;
 	}
 	
 	public void removeAnnotationsFor(List<String> identifiers) throws Exception {

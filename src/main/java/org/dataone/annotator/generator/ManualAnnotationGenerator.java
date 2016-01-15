@@ -88,13 +88,15 @@ public class ManualAnnotationGenerator {
 			JSONObject annotation = jag.constructAttributeAnnotation(sysMeta, entityCount, attributeCount, attributeName, concepts);
 			String annotationContent = annotation.toJSONString();
 			String annotationPid = annotation.get("id").toString();
-			log.debug("Manual annotation, " + annotationPid + " = " + annotationContent);
+			log.debug("Manual annotation = " + annotationContent);
 			
 			Identifier annotationIdentifier = new Identifier();
 			annotationIdentifier.setValue(annotationPid);
 			
 			// upload it
-			uploader.insertOrUpdate(annotationIdentifier , annotationContent);
+			String id = uploader.insertOrUpdate(annotationIdentifier , annotationContent);
+			log.debug("Uploaded annotation: " + id);
+
 			count++;
 			
 		}
