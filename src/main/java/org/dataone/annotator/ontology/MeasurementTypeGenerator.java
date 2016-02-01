@@ -1,6 +1,9 @@
 package org.dataone.annotator.ontology;
 
 import java.io.StringWriter;
+import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.dataone.annotator.generator.AnnotationGenerator;
 
@@ -11,18 +14,38 @@ import com.hp.hpl.jena.ontology.OntClass;
 import com.hp.hpl.jena.ontology.OntDocumentManager;
 import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.ontology.Ontology;
+import com.hp.hpl.jena.query.QueryExecutionFactory;
+import com.hp.hpl.jena.query.QuerySolution;
+import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFList;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 public class MeasurementTypeGenerator {
 
-	public static String ecso = "https://purl.org/dataone/odo/ecso.owl";
+	public static String ecso = "https://raw.githubusercontent.com/DataONEorg/sem-prov-ontologies/master/observation/d1-ECSO.owl";
 	public static String ecsoPrefix = "https://purl.org/dataone/odo/ECSO_";
-	public static int ecsoId = 1000;
+	
+	private OntModel escoModel = null;
+	private Map<String, String> namespaces = new HashMap<String, String>();
+	private int ecsoId = 1000;
 
+	public MeasurementTypeGenerator() {
+		
+		// prep the namespace prefixes
+		namespaces.put("ecso", ecsoPrefix);
+		namespaces.put("oboe", AnnotationGenerator.oboe);
+		namespaces.put("oboe-core", AnnotationGenerator.oboe_core);
+		namespaces.put("oboe-characteristics", AnnotationGenerator.oboe_characteristics);
+		
+		// retrieve the ECSO ontology
+		escoModel = ModelFactory.createOntologyModel();
+		escoModel.read(ecso);
+		
+	}
 
 	public String generateMeasurementType(String entityLabel, String characteristicLabel) {
 		
@@ -59,7 +82,9 @@ public class MeasurementTypeGenerator {
 		// create the measurement type from entity and characteristics given
 		String measurementTypeLabel = entityLabel + " " + characteristicLabel;
 
-		OntClass mt =  m.createClass(ecsoPrefix + ecsoId);
+		String partialUri = String.format("%8s", ecsoId).replace(' ', '0');  
+		String uri = ecso + partialUri;
+		OntClass mt =  m.createClass(uri);
 		mt.addProperty(rdfsLabel, measurementTypeLabel);
 		mt.setSuperClass(measurementTypeClass);
 		
@@ -85,6 +110,48 @@ public class MeasurementTypeGenerator {
 		
 		return result;
 		
+	}
+	
+	private String getNamespace(String fullLabel) {
+		String prefix = fullLabel.split(":")[0];
+		return namespaces.get(prefix);
+	}
+	
+	private String getFragment(String fullLabel) {
+		String fragment = fullLabel.split(":")[1];
+		return fragment;
+	}
+	
+	public String lookupConcept(String fullLabel) {
+		
+		String concept = null;
+		
+		String prefix = this.getNamespace(fullLabel);
+		String fragment = this.getFragment(fullLabel);
+		
+		// try finding the resource as if a uri
+		String uri = prefix + fragment;
+		Resource resource = ResourceFactory.createResource(uri);
+		if (this.escoModel.containsResource(resource)) {
+			return uri;
+		}
+		
+		// maybe it is a label
+		String queryString = "" +
+                "prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                "select ?class where {\n" +
+                "  ?class rdfs:label \"" + fragment + "\"\n" +
+                "}";
+        ResultSet results = QueryExecutionFactory.create(queryString, this.escoModel).execSelect();
+        while (results.hasNext()) {
+            QuerySolution solution = results.nextSolution();
+            concept = solution.get("class").toString();
+            System.out.println( "found matching concept: " + concept);
+            return concept;
+        }
+		
+		return concept;
+
 	}
 	
 	public static void main(String[] args) {
