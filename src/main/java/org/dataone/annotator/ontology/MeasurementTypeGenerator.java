@@ -27,9 +27,9 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 public class MeasurementTypeGenerator {
 
 	public static String ecso = "https://raw.githubusercontent.com/DataONEorg/sem-prov-ontologies/master/observation/d1-ECSO.owl";
-	public static String ecsoPrefix = "https://purl.org/dataone/odo/ECSO_";
+	public static String ecsoPrefix = "http://purl.dataone.org/odo/ECSO_";
 	
-	private OntModel escoModel = null;
+	private OntModel ecsoModel = null;
 	private Map<String, String> namespaces = new HashMap<String, String>();
 	private int ecsoId = 1000;
 
@@ -42,8 +42,8 @@ public class MeasurementTypeGenerator {
 		namespaces.put("oboe-characteristics", AnnotationGenerator.oboe_characteristics);
 		
 		// retrieve the ECSO ontology
-		escoModel = ModelFactory.createOntologyModel();
-		escoModel.read(ecso);
+		ecsoModel = ModelFactory.createOntologyModel();
+		ecsoModel.read(ecso);
 		
 	}
 
@@ -89,14 +89,20 @@ public class MeasurementTypeGenerator {
 		mt.setSuperClass(measurementTypeClass);
 		
 		// characteristic
-		OntClass characteristic = m.getOntClass(AnnotationGenerator.oboe_core + "Characteristic");
-		//characteristic.setSuperClass(characteristicClass);
+		String characteristicUri = this.lookupConcept(characteristicLabel);
+		OntClass characteristic = this.ecsoModel.getOntClass(characteristicUri);
+		// TODO: ensure it is a characteristic subclass?
 		AllValuesFromRestriction characteristicRestriction = m.createAllValuesFromRestriction(null, measuresCharacteristic, characteristic);
 		//mt.addEquivalentClass(characteristicRestriction);
 		
 		// entity
-		OntClass entity = m.getOntClass(AnnotationGenerator.oboe_core + "Entity");
-		//entity.setSuperClass(entityClass);
+		String entityUri = this.lookupConcept(entityLabel);
+		System.out.println("entityUri: " + entityUri);
+		OntClass entity = this.ecsoModel.getOntClass(entityUri);
+		System.out.println("entity: " + entity);
+		System.out.println("measuresEntity: " + measuresEntity);
+
+		// TODO: check that it is an entity subclass?
 		AllValuesFromRestriction entityRestriction = m.createAllValuesFromRestriction(null, measuresEntity, entity);
 		//mt.addEquivalentClass(entityRestriction);
 
@@ -132,7 +138,7 @@ public class MeasurementTypeGenerator {
 		// try finding the resource as if a uri
 		String uri = prefix + fragment;
 		Resource resource = ResourceFactory.createResource(uri);
-		if (this.escoModel.containsResource(resource)) {
+		if (this.ecsoModel.containsResource(resource)) {
 			return uri;
 		}
 		
@@ -142,7 +148,7 @@ public class MeasurementTypeGenerator {
                 "select ?class where {\n" +
                 "  ?class rdfs:label \"" + fragment + "\"\n" +
                 "}";
-        ResultSet results = QueryExecutionFactory.create(queryString, this.escoModel).execSelect();
+        ResultSet results = QueryExecutionFactory.create(queryString, this.ecsoModel).execSelect();
         while (results.hasNext()) {
             QuerySolution solution = results.nextSolution();
             concept = solution.get("class").toString();
@@ -156,7 +162,7 @@ public class MeasurementTypeGenerator {
 	
 	public static void main(String[] args) {
 		MeasurementTypeGenerator mtg = new MeasurementTypeGenerator();
-		String rdf = mtg.generateMeasurementType("tree", "height");
+		String rdf = mtg.generateMeasurementType("ecso:Tree", "oboe-characteristics:Count");
 		System.out.println(rdf);
 		
 	}
