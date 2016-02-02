@@ -1,7 +1,6 @@
 package org.dataone.annotator.ontology;
 
 import java.io.StringWriter;
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -62,28 +61,21 @@ public class MeasurementTypeGenerator {
 		m.addSubModel(OntDocumentManager.getInstance().getModel(AnnotationGenerator.oboe));
 		
 		// properties
-		Property rdfValue = m.getProperty(AnnotationGenerator.rdf + "value");
 		Property rdfsLabel = m.getProperty(AnnotationGenerator.rdfs + "label");
 		
 		ObjectProperty measuresCharacteristic = m.getObjectProperty(AnnotationGenerator.oboe_core + "measuresCharacteristic");
-		ObjectProperty usesStandard = m.getObjectProperty(AnnotationGenerator.oboe_core + "usesStandard");
 		ObjectProperty measuresEntity = m.getObjectProperty(AnnotationGenerator.oboe_core + "measuresEntity");
-		ObjectProperty hasMeasurement = m.getObjectProperty(AnnotationGenerator.oboe_core + "hasMeasurement");
 
 		// classes
 		OntClass entityClass =  m.getOntClass(AnnotationGenerator.oboe_core + "Entity");
-		OntClass observationClass =  m.getOntClass(AnnotationGenerator.oboe_core + "Observation");
-		OntClass measurementClass =  m.getOntClass(AnnotationGenerator.oboe_core + "Measurement");
-		OntClass measurementTypeClass =  m.getOntClass(AnnotationGenerator.oboe_core + "MeasurementType");
 		OntClass characteristicClass = m.getOntClass(AnnotationGenerator.oboe_core + "Characteristic");
-		OntClass standardClass =  m.getOntClass(AnnotationGenerator.oboe_core + "Standard");
-		
+		OntClass measurementTypeClass =  m.getOntClass(AnnotationGenerator.oboe_core + "MeasurementType");
 		
 		// create the measurement type from entity and characteristics given
-		String measurementTypeLabel = entityLabel + " " + characteristicLabel;
+		String measurementTypeLabel = this.getFragment(entityLabel) + " " + this.getFragment(characteristicLabel);
 
 		String partialUri = String.format("%8s", ecsoId).replace(' ', '0');  
-		String uri = ecso + partialUri;
+		String uri = ecsoPrefix + partialUri;
 		OntClass mt =  m.createClass(uri);
 		mt.addProperty(rdfsLabel, measurementTypeLabel);
 		mt.setSuperClass(measurementTypeClass);
@@ -106,6 +98,7 @@ public class MeasurementTypeGenerator {
 		AllValuesFromRestriction entityRestriction = m.createAllValuesFromRestriction(null, measuresEntity, entity);
 		//mt.addEquivalentClass(entityRestriction);
 
+		// an intersection of entity+characteristic?
 		RDFList members = m.createList(new RDFNode[]{entityRestriction, characteristicRestriction});
 		IntersectionClass intersection = m.createIntersectionClass(null, members);
 		mt.addEquivalentClass(intersection);
