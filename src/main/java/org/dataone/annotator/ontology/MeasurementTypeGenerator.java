@@ -52,24 +52,19 @@ public class MeasurementTypeGenerator {
 		
 		AnnotationGenerator.initializeCache();
 
-		// construct the ontology
+		// construct the ontology model for additions
 		OntModel m = ModelFactory.createOntologyModel();
-		Ontology ont = m.createOntology(ecso);
-		//m.addSubModel(OntDocumentManager.getInstance().getModel(ecso));
-		
-		ont.addImport(m.createResource(AnnotationGenerator.oboe));
-		m.addSubModel(OntDocumentManager.getInstance().getModel(AnnotationGenerator.oboe));
-		
+
 		// properties
-		Property rdfsLabel = m.getProperty(AnnotationGenerator.rdfs + "label");
+		Property rdfsLabel = ecsoModel.getProperty(AnnotationGenerator.rdfs + "label");
 		
-		ObjectProperty measuresCharacteristic = m.getObjectProperty(AnnotationGenerator.oboe_core + "measuresCharacteristic");
-		ObjectProperty measuresEntity = m.getObjectProperty(AnnotationGenerator.oboe_core + "measuresEntity");
+		ObjectProperty measuresCharacteristic = ecsoModel.getObjectProperty(AnnotationGenerator.oboe_core + "measuresCharacteristic");
+		ObjectProperty measuresEntity = ecsoModel.getObjectProperty(AnnotationGenerator.oboe_core + "measuresEntity");
 
 		// classes
-		OntClass entityClass =  m.getOntClass(AnnotationGenerator.oboe_core + "Entity");
-		OntClass characteristicClass = m.getOntClass(AnnotationGenerator.oboe_core + "Characteristic");
-		OntClass measurementTypeClass =  m.getOntClass(AnnotationGenerator.oboe_core + "MeasurementType");
+		OntClass entityClass =  ecsoModel.getOntClass(AnnotationGenerator.oboe_core + "Entity");
+		OntClass characteristicClass = ecsoModel.getOntClass(AnnotationGenerator.oboe_core + "Characteristic");
+		OntClass measurementTypeClass =  ecsoModel.getOntClass(AnnotationGenerator.oboe_core + "MeasurementType");
 		
 		// create the measurement type from entity and characteristics given
 		String measurementTypeLabel = this.getFragment(entityLabel) + " " + this.getFragment(characteristicLabel);
