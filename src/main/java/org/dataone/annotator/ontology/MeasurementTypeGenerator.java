@@ -6,8 +6,6 @@ import java.util.Map;
 
 import org.dataone.annotator.generator.AnnotationGenerator;
 
-import com.hp.hpl.jena.ontology.AllValuesFromRestriction;
-import com.hp.hpl.jena.ontology.IntersectionClass;
 import com.hp.hpl.jena.ontology.ObjectProperty;
 import com.hp.hpl.jena.ontology.OntClass;
 import com.hp.hpl.jena.ontology.OntDocumentManager;
@@ -19,8 +17,6 @@ import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.RDFList;
-import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
@@ -28,15 +24,18 @@ public class MeasurementTypeGenerator {
 
 	public static String ecso = "https://raw.githubusercontent.com/DataONEorg/sem-prov-ontologies/master/observation/d1-ECSO.owl";
 	public static String ecsoPrefix = "http://purl.dataone.org/odo/ECSO_";
+	public static String taxaPrefix = "http://purl.dataone.org/odo/TAXA_";
+
 	
 	private OntModel ecsoModel = null;
 	private Map<String, String> namespaces = new HashMap<String, String>();
-	private int ecsoId = 1000;
+	private int classId = 1000;
 
 	public MeasurementTypeGenerator() {
 		
 		// prep the namespace prefixes
 		namespaces.put("ecso", ecsoPrefix);
+		namespaces.put("taxa", taxaPrefix);
 		namespaces.put("oboe", AnnotationGenerator.oboe);
 		namespaces.put("oboe-core", AnnotationGenerator.oboe_core);
 		namespaces.put("oboe-characteristics", AnnotationGenerator.oboe_characteristics);
@@ -45,36 +44,45 @@ public class MeasurementTypeGenerator {
 		ecsoModel = ModelFactory.createOntologyModel();
 		ecsoModel.read(ecso);
 		
-	}
-
-	public String generateMeasurementType(String entityLabel, String characteristicLabel) {
-		
-		String result = null;		
-		
 		AnnotationGenerator.initializeCache();
 
 		// construct the ontology model for additions
-		OntModel m = ModelFactory.createOntologyModel();
+		m = ModelFactory.createOntologyModel();
 		
 		Ontology ont = m.createOntology(ecso);
 		ont.addImport(m.createResource(AnnotationGenerator.oboe));
 		m.addSubModel(OntDocumentManager.getInstance().getModel(AnnotationGenerator.oboe));
 		
 		// properties
-		Property rdfsLabel = ecsoModel.getProperty(AnnotationGenerator.rdfs + "label");
+		rdfsLabel = ecsoModel.getProperty(AnnotationGenerator.rdfs + "label");
 		
-		ObjectProperty measuresCharacteristic = ecsoModel.getObjectProperty(AnnotationGenerator.oboe_core + "measuresCharacteristic");
-		ObjectProperty measuresEntity = ecsoModel.getObjectProperty(AnnotationGenerator.oboe_core + "measuresEntity");
+		measuresCharacteristic = ecsoModel.getObjectProperty(AnnotationGenerator.oboe_core + "measuresCharacteristic");
+		measuresEntity = ecsoModel.getObjectProperty(AnnotationGenerator.oboe_core + "measuresEntity");
 
 		// classes
-		OntClass entityClass =  ecsoModel.getOntClass(AnnotationGenerator.oboe_core + "Entity");
-		OntClass characteristicClass = ecsoModel.getOntClass(AnnotationGenerator.oboe_core + "Characteristic");
-		OntClass measurementTypeClass =  ecsoModel.getOntClass(AnnotationGenerator.oboe_core + "MeasurementType");
+		entityClass =  ecsoModel.getOntClass(AnnotationGenerator.oboe_core + "Entity");
+		characteristicClass = ecsoModel.getOntClass(AnnotationGenerator.oboe_core + "Characteristic");
+		measurementTypeClass =  ecsoModel.getOntClass(AnnotationGenerator.oboe_core + "MeasurementType");
+		
+	}
+	
+	private OntModel m = null;
+	private Property rdfsLabel = null;
+	private ObjectProperty measuresCharacteristic = null;
+	private ObjectProperty measuresEntity = null;
+
+	// classes
+	private OntClass entityClass =  null;
+	private OntClass characteristicClass = null;
+	private OntClass measurementTypeClass =  null;
+	
+
+	public OntClass generateMeasurementType(String entityLabel, String characteristicLabel) {
 		
 		// create the measurement type from entity and characteristics given
 		String measurementTypeLabel = this.getFragment(entityLabel) + " " + this.getFragment(characteristicLabel);
 
-		String partialUri = String.format("%8s", ecsoId).replace(' ', '0');  
+		String partialUri = String.format("%8s", classId++).replace(' ', '0');  
 		String uri = ecsoPrefix + partialUri;
 		OntClass mt =  m.createClass(uri);
 		mt.addProperty(rdfsLabel, measurementTypeLabel);
@@ -83,32 +91,41 @@ public class MeasurementTypeGenerator {
 		// characteristic
 		String characteristicUri = this.lookupConcept(characteristicLabel);
 		OntClass characteristic = this.ecsoModel.getOntClass(characteristicUri);
-		// TODO: ensure it is a characteristic subclass?
 		SomeValuesFromRestriction characteristicRestriction = m.createSomeValuesFromRestriction(null, measuresCharacteristic, characteristic);
 		mt.addSuperClass(characteristicRestriction);
 		
 		// entity
 		String entityUri = this.lookupConcept(entityLabel);
-		System.out.println("entityUri: " + entityUri);
 		OntClass entity = this.ecsoModel.getOntClass(entityUri);
-		System.out.println("entity: " + entity);
-		System.out.println("measuresEntity: " + measuresEntity);
-
-		// TODO: check that it is an entity subclass?
 		SomeValuesFromRestriction entityRestriction = m.createSomeValuesFromRestriction(null, measuresEntity, entity);
 		mt.addSuperClass(entityRestriction);
-
-		// an intersection of entity+characteristic?
-//		RDFList members = m.createList(new RDFNode[]{entityRestriction, characteristicRestriction});
-//		IntersectionClass intersection = m.createIntersectionClass(null, members);
-//		mt.addEquivalentClass(intersection);
+	
+		return mt;
 		
+	}
+	
+	public OntClass generateEntity(String entityString) {
+		
+		// create the entity subclass
+		String entityLabel = this.getFragment(entityString);
+		String entityNamespace = this.getNamespace(entityString);
+
+		String partialUri = String.format("%8s", classId++).replace(' ', '0');  
+		String uri = entityNamespace + partialUri;
+		OntClass entitySubclass =  m.createClass(uri);
+		entitySubclass.addProperty(rdfsLabel, entityLabel);
+		entitySubclass.setSuperClass(entityClass);
+		
+		return entitySubclass;
+		
+	}
+	
+	public String getModelAsString() {
 		StringWriter sw = new StringWriter();
 		m.write(sw, "RDF/XML");
-		result = sw.toString();
+		String result = sw.toString();
 		
 		return result;
-		
 	}
 	
 	private String getNamespace(String fullLabel) {
@@ -155,7 +172,10 @@ public class MeasurementTypeGenerator {
 	
 	public static void main(String[] args) {
 		MeasurementTypeGenerator mtg = new MeasurementTypeGenerator();
-		String rdf = mtg.generateMeasurementType("ecso:Tree", "oboe-characteristics:Count");
+		OntClass measurementType = mtg.generateMeasurementType("ecso:Tree", "oboe-characteristics:Count");
+		OntClass entity = mtg.generateEntity("taxa:Cyperus");
+
+		String rdf = mtg.getModelAsString();
 		System.out.println(rdf);
 		
 	}
