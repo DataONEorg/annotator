@@ -13,6 +13,7 @@ import com.hp.hpl.jena.ontology.OntClass;
 import com.hp.hpl.jena.ontology.OntDocumentManager;
 import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.ontology.Ontology;
+import com.hp.hpl.jena.ontology.SomeValuesFromRestriction;
 import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
@@ -54,7 +55,11 @@ public class MeasurementTypeGenerator {
 
 		// construct the ontology model for additions
 		OntModel m = ModelFactory.createOntologyModel();
-
+		
+		Ontology ont = m.createOntology(ecso);
+		ont.addImport(m.createResource(AnnotationGenerator.oboe));
+		m.addSubModel(OntDocumentManager.getInstance().getModel(AnnotationGenerator.oboe));
+		
 		// properties
 		Property rdfsLabel = ecsoModel.getProperty(AnnotationGenerator.rdfs + "label");
 		
@@ -79,8 +84,8 @@ public class MeasurementTypeGenerator {
 		String characteristicUri = this.lookupConcept(characteristicLabel);
 		OntClass characteristic = this.ecsoModel.getOntClass(characteristicUri);
 		// TODO: ensure it is a characteristic subclass?
-		AllValuesFromRestriction characteristicRestriction = m.createAllValuesFromRestriction(null, measuresCharacteristic, characteristic);
-		//mt.addEquivalentClass(characteristicRestriction);
+		SomeValuesFromRestriction characteristicRestriction = m.createSomeValuesFromRestriction(null, measuresCharacteristic, characteristic);
+		mt.addSuperClass(characteristicRestriction);
 		
 		// entity
 		String entityUri = this.lookupConcept(entityLabel);
@@ -90,13 +95,13 @@ public class MeasurementTypeGenerator {
 		System.out.println("measuresEntity: " + measuresEntity);
 
 		// TODO: check that it is an entity subclass?
-		AllValuesFromRestriction entityRestriction = m.createAllValuesFromRestriction(null, measuresEntity, entity);
-		//mt.addEquivalentClass(entityRestriction);
+		SomeValuesFromRestriction entityRestriction = m.createSomeValuesFromRestriction(null, measuresEntity, entity);
+		mt.addSuperClass(entityRestriction);
 
 		// an intersection of entity+characteristic?
-		RDFList members = m.createList(new RDFNode[]{entityRestriction, characteristicRestriction});
-		IntersectionClass intersection = m.createIntersectionClass(null, members);
-		mt.addEquivalentClass(intersection);
+//		RDFList members = m.createList(new RDFNode[]{entityRestriction, characteristicRestriction});
+//		IntersectionClass intersection = m.createIntersectionClass(null, members);
+//		mt.addEquivalentClass(intersection);
 		
 		StringWriter sw = new StringWriter();
 		m.write(sw, "RDF/XML");
