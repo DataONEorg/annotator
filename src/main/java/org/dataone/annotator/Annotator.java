@@ -31,6 +31,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.annotator.generator.AnnotationUploader;
 import org.dataone.annotator.generator.ManualAnnotationGenerator;
+import org.dataone.annotator.ontology.MeasurementTypeGenerator;
 import org.dataone.client.auth.CertificateManager;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
@@ -57,6 +58,7 @@ public class Annotator {
 		Option remove = new Option("remove", "remove the annotations");
 		Option removeAll = new Option("removeAll", "remove ALL annotations");
 		Option manual = new Option("manual", "create manual annotations");
+		Option types = new Option("types", "create ontology types");
 
 		Options options = new Options();
 		
@@ -65,6 +67,7 @@ public class Annotator {
 		options.addOption(remove);
 		options.addOption(removeAll);
 		options.addOption(manual);
+		options.addOption(types);
 		options.addOption(pidFile);
 		options.addOption(nThreads);
 
@@ -123,6 +126,13 @@ public class Annotator {
 		        	String pidFile = cmd.getOptionValue("pidfile");
 		        	ManualAnnotationGenerator man = new ManualAnnotationGenerator(session);
 		        	man.generateAndUpload(pidFile);
+		        	return;
+		        }
+		        
+		        if (cmd.hasOption("types")) {
+		        	String pidFile = cmd.getOptionValue("pidfile");
+		        	MeasurementTypeGenerator mtg = new MeasurementTypeGenerator();
+		        	mtg.generateTypes(pidFile);
 		        	return;
 		        }
 		        

@@ -1,9 +1,17 @@
 package org.dataone.annotator.ontology;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.annotator.generator.AnnotationGenerator;
 
 import com.hp.hpl.jena.ontology.ObjectProperty;
@@ -21,6 +29,8 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 public class MeasurementTypeGenerator {
+	
+	private static Log log = LogFactory.getLog(MeasurementTypeGenerator.class);
 
 	public static String ecso = "https://raw.githubusercontent.com/DataONEorg/sem-prov-ontologies/master/observation/d1-ECSO.owl";
 	public static String ecsoPrefix = "http://purl.dataone.org/odo/ECSO_";
@@ -81,21 +91,39 @@ public class MeasurementTypeGenerator {
 		
 		// create the measurement type from entity and characteristics given
 		String measurementTypeLabel = this.getFragment(entityLabel) + " " + this.getFragment(characteristicLabel);
+		
+		// check if we have it already
+		String existingType = this.lookupConcept("ecso:" + measurementTypeLabel);
+		if (existingType != null) {
+			OntClass mt =  m.createClass(existingType);
+			return mt;
+		}
+		
+		// characteristic
+		String characteristicUri = this.lookupConcept(characteristicLabel);
+		if (characteristicUri == null) {
+			return null;
+		}
 
+		// entity
+		String entityUri = this.lookupConcept(entityLabel);
+		if (entityUri == null) {
+			return null;
+		}
+		
+		// start the measurement type
 		String partialUri = String.format("%8s", classId++).replace(' ', '0');  
 		String uri = ecsoPrefix + partialUri;
 		OntClass mt =  m.createClass(uri);
 		mt.addProperty(rdfsLabel, measurementTypeLabel);
 		mt.setSuperClass(measurementTypeClass);
 		
-		// characteristic
-		String characteristicUri = this.lookupConcept(characteristicLabel);
+		// add characteristic
 		OntClass characteristic = this.ecsoModel.getOntClass(characteristicUri);
 		SomeValuesFromRestriction characteristicRestriction = m.createSomeValuesFromRestriction(null, measuresCharacteristic, characteristic);
 		mt.addSuperClass(characteristicRestriction);
 		
-		// entity
-		String entityUri = this.lookupConcept(entityLabel);
+		// add entity
 		OntClass entity = this.ecsoModel.getOntClass(entityUri);
 		SomeValuesFromRestriction entityRestriction = m.createSomeValuesFromRestriction(null, measuresEntity, entity);
 		mt.addSuperClass(entityRestriction);
@@ -162,7 +190,7 @@ public class MeasurementTypeGenerator {
         while (results.hasNext()) {
             QuerySolution solution = results.nextSolution();
             concept = solution.get("class").toString();
-            System.out.println( "found matching concept: " + concept);
+            log.debug( "found matching concept: " + concept);
             return concept;
         }
 		
@@ -177,6 +205,47 @@ public class MeasurementTypeGenerator {
 
 		String rdf = mtg.getModelAsString();
 		System.out.println(rdf);
+		
+	}
+
+	public String generateTypes(String pidFile) throws Exception {
+		// fetch the file
+		URL url = new URL(pidFile);
+    	InputStream inputStream = url.openStream();
+		BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+		
+		// parse it
+		Iterable<CSVRecord> records = CSVFormat.EXCEL.withHeader().parse(reader);
+		
+		int count = 0;
+		// iterate over the rows
+		for (CSVRecord record : records) {
+			// get the info from the csv file
+		    String entityLabel = record.get("Entity");
+		    String characteristicLabel = record.get("Characteristic");
+		    String class_id_int = record.get("class_id_int");
+		    
+		    // skip records that already have a MeasurementType concept
+		    if (class_id_int != null && class_id_int.length() > 0) {
+		    	continue;
+		    }
+		    
+		    // or that don't have enough information
+		    if (entityLabel == null || entityLabel.length() == 0) {
+		    	continue;
+		    }
+		    if (characteristicLabel == null || characteristicLabel.length() == 0) {
+		    	continue;
+		    }
+		    
+		    this.generateMeasurementType(entityLabel, characteristicLabel);
+		    count++;
+		}
+		log.debug("Generated class count: " + count);
+		
+		String rdf = this.getModelAsString();
+		System.out.println(rdf);
+		return rdf;
 		
 	}
 	
