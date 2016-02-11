@@ -13,6 +13,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.annotator.generator.AnnotationGenerator;
+import org.dataone.configuration.Settings;
 
 import com.hp.hpl.jena.ontology.ObjectProperty;
 import com.hp.hpl.jena.ontology.OntClass;
@@ -32,14 +33,13 @@ public class MeasurementTypeGenerator {
 	
 	private static Log log = LogFactory.getLog(MeasurementTypeGenerator.class);
 
-	public static String ecso = "https://raw.githubusercontent.com/DataONEorg/sem-prov-ontologies/master/observation/d1-ECSO.owl";
+	public static String ecso = "http://purl.dataone.org/odo/d1-ECSO.owl";
 	public static String ecsoPrefix = "http://purl.dataone.org/odo/ECSO_";
 	public static String taxaPrefix = "http://purl.dataone.org/odo/TAXA_";
 
-	
 	private OntModel ecsoModel = null;
 	private Map<String, String> namespaces = new HashMap<String, String>();
-	private int classId = 1000;
+	private int classId;
 
 	public MeasurementTypeGenerator() {
 		
@@ -73,6 +73,9 @@ public class MeasurementTypeGenerator {
 		entityClass =  ecsoModel.getOntClass(AnnotationGenerator.oboe_core + "Entity");
 		characteristicClass = ecsoModel.getOntClass(AnnotationGenerator.oboe_core + "Characteristic");
 		measurementTypeClass =  ecsoModel.getOntClass(AnnotationGenerator.oboe_core + "MeasurementType");
+		
+		// where do we begin with our counting?
+		classId = Settings.getConfiguration().getInt("annotator.ontology.classId");
 		
 	}
 	
