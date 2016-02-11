@@ -167,6 +167,17 @@ public class MeasurementTypeGenerator {
 	}
 	
 	public String lookupConcept(String fullLabel) {
+		String concept = null;
+		// look in current model
+		concept = this.lookupConcept(fullLabel, this.m);
+		// look in existing model
+		if (concept == null) {
+			concept = this.lookupConcept(fullLabel, this.ecsoModel);
+		}
+		return concept;
+	}
+	
+	public String lookupConcept(String fullLabel, OntModel model) {
 		
 		String concept = null;
 		
@@ -176,7 +187,8 @@ public class MeasurementTypeGenerator {
 		// try finding the resource as if a uri
 		String uri = prefix + fragment;
 		Resource resource = ResourceFactory.createResource(uri);
-		if (this.ecsoModel.containsResource(resource)) {
+		// look in the existing model
+		if (model.containsResource(resource)) {
 			return uri;
 		}
 		
@@ -186,7 +198,7 @@ public class MeasurementTypeGenerator {
                 "select ?class where {\n" +
                 "  ?class rdfs:label \"" + fragment + "\"\n" +
                 "}";
-        ResultSet results = QueryExecutionFactory.create(queryString, this.ecsoModel).execSelect();
+        ResultSet results = QueryExecutionFactory.create(queryString, model).execSelect();
         while (results.hasNext()) {
             QuerySolution solution = results.nextSolution();
             concept = solution.get("class").toString();
@@ -238,8 +250,17 @@ public class MeasurementTypeGenerator {
 		    	continue;
 		    }
 		    
-		    this.generateMeasurementType(entityLabel, characteristicLabel);
-		    count++;
+		    OntClass mt = this.generateMeasurementType(entityLabel, characteristicLabel);
+		    // log for tying it back to the source rows
+		    if (mt != null) {
+			    log.debug("Generated MeasurementType: \t" 
+			    		+ mt.getURI() + "\t" 
+			    		+ mt.getLabel(null) + "\t" 
+			    		+ entityLabel + "\t" 
+			    		+ characteristicLabel
+			    		);
+			    count++;
+		    }
 		}
 		log.debug("Generated class count: " + count);
 		
