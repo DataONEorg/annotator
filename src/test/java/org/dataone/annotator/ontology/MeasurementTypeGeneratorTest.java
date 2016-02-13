@@ -17,7 +17,7 @@ public class MeasurementTypeGeneratorTest {
 	
 	@Test
 	public void testLabelLookup() {
-		String fullLabel = "ecso:concentration";
+		String fullLabel = "ecso:concentration_MeasurementType";
 		MeasurementTypeGenerator mtg = new MeasurementTypeGenerator();
 		String conceptUri = mtg.lookupConcept(fullLabel);
 		assertEquals("http://purl.dataone.org/odo/ECSO_00000512", conceptUri);
