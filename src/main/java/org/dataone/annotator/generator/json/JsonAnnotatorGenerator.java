@@ -327,8 +327,8 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 			JSONArray tags = new JSONArray();
 			for (ConceptItem conceptItem: concepts) {
 				tags.add(conceptItem.getUri().toString());
-				// TODO: more than one match?
-				//break;
+				// only include one match since we are targeting MeasurementType subclasses
+				break;
 			}
 			annotation.put("tags", tags);
 

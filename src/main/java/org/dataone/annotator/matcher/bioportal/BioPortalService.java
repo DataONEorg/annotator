@@ -15,6 +15,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.xpath.XPathAPI;
 import org.dataone.annotator.matcher.ConceptItem;
 import org.dataone.annotator.matcher.ConceptMatcher;
+import org.dataone.annotator.ontology.MeasurementTypeGenerator;
 import org.dataone.configuration.Settings;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -32,17 +33,23 @@ public class BioPortalService implements ConceptMatcher {
     private String restUrl = null;
     private String apiKey = null;
     private String ontologies = null;
+    private MeasurementTypeGenerator mtg = null;
 
     public BioPortalService() {
     	restUrl = Settings.getConfiguration().getString("annotator.matcher.bioportal.restUrl", "http://data.bioontology.org");
     	apiKey = Settings.getConfiguration().getString("annotator.matcher.bioportal.apiKey", "24e4775e-54e0-11e0-9d7b-005056aa3316");
     	ontologies = Settings.getConfiguration().getString("annotator.matcher.bioportal.ontologies", "ECSO,PROV-ONE,DATA-CITE,DC-TERMS,OWL-TIME");
-
+    	mtg = new MeasurementTypeGenerator();
     }
 
     @Override
     public List<ConceptItem> getConcepts(String text) throws Exception {
-    	List<ConceptItem> concepts = lookupAnnotationClasses(null, text, ontologies);    	
+    	
+    	// limit suggested annotations to MeasurementType subclasses.
+    	OntClass measurementTypeClass = mtg.getMeasurementTypeClass();
+    	//measurementTypeClass = null;
+
+    	List<ConceptItem> concepts = lookupAnnotationClasses(measurementTypeClass, text, ontologies);    	
     	return concepts;
     	
     }

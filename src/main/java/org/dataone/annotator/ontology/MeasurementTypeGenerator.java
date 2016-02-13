@@ -40,6 +40,16 @@ public class MeasurementTypeGenerator {
 	private OntModel ecsoModel = null;
 	private Map<String, String> namespaces = new HashMap<String, String>();
 	private int classId;
+	
+	private OntModel m = null;
+	private Property rdfsLabel = null;
+	private ObjectProperty measuresCharacteristic = null;
+	private ObjectProperty measuresEntity = null;
+
+	// classes
+	private OntClass entityClass =  null;
+	private OntClass characteristicClass = null;
+	private OntClass measurementTypeClass =  null;
 
 	public MeasurementTypeGenerator() {
 		
@@ -78,16 +88,6 @@ public class MeasurementTypeGenerator {
 		classId = Settings.getConfiguration().getInt("annotator.ontology.classId");
 		
 	}
-	
-	private OntModel m = null;
-	private Property rdfsLabel = null;
-	private ObjectProperty measuresCharacteristic = null;
-	private ObjectProperty measuresEntity = null;
-
-	// classes
-	private OntClass entityClass =  null;
-	private OntClass characteristicClass = null;
-	private OntClass measurementTypeClass =  null;
 	
 
 	public OntClass generateMeasurementType(String entityLabel, String characteristicLabel) {
@@ -169,6 +169,16 @@ public class MeasurementTypeGenerator {
 		return fragment;
 	}
 	
+	public OntClass getMeasurementTypeClass() {
+		return measurementTypeClass;
+	}
+
+
+	public void setMeasurementTypeClass(OntClass measurementTypeClass) {
+		this.measurementTypeClass = measurementTypeClass;
+	}
+
+
 	public String lookupConcept(String fullLabel) {
 		String concept = null;
 		// look in current model
