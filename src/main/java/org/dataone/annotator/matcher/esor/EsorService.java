@@ -17,6 +17,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.dataone.annotator.matcher.ConceptItem;
 import org.dataone.annotator.matcher.ConceptMatcher;
 import org.dataone.annotator.matcher.QueryItem;
+import org.dataone.annotator.ontology.MeasurementTypeGenerator;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -28,6 +29,12 @@ public class EsorService implements ConceptMatcher {
 
 	//temporary server for testing
 	private static final String REST_URL = "https://esor.tw.rpi.edu/annotate/annotate";
+
+	private MeasurementTypeGenerator mtg = null;
+	
+	public EsorService() {
+    	mtg  = new MeasurementTypeGenerator();
+	}
 
 
 	@Override
@@ -59,7 +66,7 @@ public class EsorService implements ConceptMatcher {
 		return getConcepts(sb.toString());
 	}
 
-	private static List<ConceptItem> lookupEsor(String query) throws Exception  {
+	private List<ConceptItem> lookupEsor(String query) throws Exception  {
 
 		HttpClient client = HttpClients.createDefault();
 		// remove quotes for now
@@ -95,10 +102,15 @@ public class EsorService implements ConceptMatcher {
 				String score = a.getString("score");
 				System.out.println("url=" + url + ", score=" + score);
 
+				
 				//returned result may be empty
-				if(url.length()>0) {
-					ConceptItem c = new ConceptItem(new URI(url), Double.parseDouble(score));
-					concepts.add(c);
+				if (url.length() > 0) {
+					// check that it is a subclass of our measurementType
+					boolean isSubclass = mtg.isMeasurementTypeSubclass(url);
+					if (isSubclass) {
+						ConceptItem c = new ConceptItem(new URI(url), Double.parseDouble(score));
+						concepts.add(c);
+					}
 				} else{
 					//System.out.println("NA");
 				}

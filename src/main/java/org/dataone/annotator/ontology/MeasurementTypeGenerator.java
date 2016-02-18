@@ -15,6 +15,7 @@ import org.apache.commons.logging.LogFactory;
 import org.dataone.annotator.generator.AnnotationGenerator;
 import org.dataone.configuration.Settings;
 
+import com.hp.hpl.jena.ontology.ConversionException;
 import com.hp.hpl.jena.ontology.ObjectProperty;
 import com.hp.hpl.jena.ontology.OntClass;
 import com.hp.hpl.jena.ontology.OntDocumentManager;
@@ -97,6 +98,23 @@ public class MeasurementTypeGenerator {
 		classId = Settings.getConfiguration().getInt("annotator.ontology.classId");
 		
 	}
+	
+	public boolean isMeasurementTypeSubclass(String classURI) {
+    	
+    	OntClass superClass = this.getMeasurementTypeClass();
+    	
+		// check that it is a subclass of superClass
+		Resource subclass = superClass.getModel().getResource(classURI);
+		boolean isSubclass = false;
+		try {
+			isSubclass = superClass.hasSubClass(subclass);
+		} catch (ConversionException ce) {
+			log.warn("Skipping unknown subclass: " + classURI + " -- " + ce.getMessage() );
+			// try the next one
+			return false;
+		}
+		return isSubclass;
+    }
 	
 
 	public OntClass generateMeasurementType(String entityLabel, String characteristicLabel) {

@@ -23,6 +23,7 @@ import org.w3c.dom.NodeList;
 
 import com.hp.hpl.jena.ontology.ConversionException;
 import com.hp.hpl.jena.ontology.OntClass;
+import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 public class BioPortalService implements ConceptMatcher {
@@ -41,15 +42,16 @@ public class BioPortalService implements ConceptMatcher {
     	ontologies = Settings.getConfiguration().getString("annotator.matcher.bioportal.ontologies", "ECSO,PROV-ONE,DATA-CITE,DC-TERMS,OWL-TIME");
     	mtg = new MeasurementTypeGenerator();
     }
+    
 
     @Override
     public List<ConceptItem> getConcepts(String text) throws Exception {
     	
     	// limit suggested annotations to MeasurementType subclasses.
-    	OntClass measurementTypeClass = mtg.getMeasurementTypeClass();
+    	//OntClass measurementTypeClass = mtg.getMeasurementTypeClass();
     	//measurementTypeClass = null;
 
-    	List<ConceptItem> concepts = lookupAnnotationClasses(measurementTypeClass, text, ontologies);    	
+    	List<ConceptItem> concepts = lookupAnnotationClasses(text, ontologies);    	
     	return concepts;
     	
     }
@@ -70,7 +72,7 @@ public class BioPortalService implements ConceptMatcher {
 	 * @param text
 	 * @return
 	 */
-	private List<ConceptItem> lookupAnnotationClasses(OntClass superClass, String text, String ontologies) {
+	private List<ConceptItem> lookupAnnotationClasses(String text, String ontologies) {
 		
 		// no point calling the service
 		if (text == null || text.length() == 0) {
@@ -121,25 +123,12 @@ public class BioPortalService implements ConceptMatcher {
 						concept.setDefinition(defNode.getFirstChild().getNodeValue());
 					}
 					
-					// are we filtering based on super class?
-					if (superClass == null) {
-						// just add the suggestion to the list
+					// is this a subclass we want?
+					boolean isSubclass = mtg.isMeasurementTypeSubclass(classURI);
+					
+					// now we can add this class
+					if (isSubclass) {
 						results.add(concept);
-					} else {
-						// check that it is a subclass of superClass
-						Resource subclass = superClass.getModel().getResource(classURI);
-						boolean isSubclass = false;
-						try {
-							isSubclass = superClass.hasSubClass(subclass);
-						} catch (ConversionException ce) {
-							log.warn("Skipping unknown subclass: " + classURI + " -- " + ce.getMessage() );
-							// try the next one
-							continue;
-						}
-						// now we can add this class
-						if (isSubclass) {
-							results.add(concept);
-						}
 					}
 					
 				}
