@@ -137,16 +137,20 @@ public class MeasurementTypeGenerator {
 		if (characteristicUri == null) {
 			// generate it
 			characteristic = generateCharacteristic(characteristicLabel);
+			if (characteristic == null) {
+				return null;
+			}
 			characteristicUri = characteristic.getURI();
-			//return null;
 		}
 
 		// entity
 		String entityUri = this.lookupConcept(entityLabel);
 		if (entityUri == null) {
 			entity = generateEntity(entityLabel);
+			if (entity == null) {
+					return null;
+			}
 			entityUri = entity.getURI();
-			//return null;
 		}
 		
 		// start the measurement type
@@ -179,6 +183,11 @@ public class MeasurementTypeGenerator {
 		// create the entity subclass
 		String entityLabel = this.getFragment(entityString);
 		String entityNamespace = this.getNamespace(entityString);
+		
+		if (entityNamespace == null) {
+			log.warn("Namespace is null for: " + entityString);
+			return null;
+		}
 
 		String partialUri = String.format("%8s", classId++).replace(' ', '0');  
 		String uri = entityNamespace + partialUri;
@@ -196,6 +205,11 @@ public class MeasurementTypeGenerator {
 		// create the entity subclass
 		String characteristicLabel = this.getFragment(characteristicString);
 		String characteristicNamespace = this.getNamespace(characteristicString);
+		
+		if (characteristicNamespace == null) {
+			log.warn("Namespace is null for: " + characteristicString);
+			return null;
+		}
 
 		String partialUri = String.format("%8s", classId++).replace(' ', '0');  
 		String uri = characteristicNamespace + partialUri;
@@ -333,7 +347,7 @@ public class MeasurementTypeGenerator {
 		    }
 		    
 		    // hash for distinct values
-		    String rowValue = entityLabel + characteristicLabel;
+		    String rowValue = entityLabel + " " + characteristicLabel;
 		    log.debug("Processing row: " + rowValue);
 
 		    if (generatedConcepts.containsKey(rowValue)) {
@@ -353,6 +367,8 @@ public class MeasurementTypeGenerator {
 			    // record for future iteration
 			    generatedConcepts.put(rowValue, mt);
 			    count++;
+		    } else {
+			    log.debug("could not generate MeasurementType for row: " + rowValue); 
 		    }
 		}
 		log.debug("Generated class count: " + count);
