@@ -36,10 +36,15 @@ public class MeasurementTypeGenerator {
 	public static String ecso = "http://purl.dataone.org/odo/d1-ECSO.owl";
 	public static String ecsoPrefix = "http://purl.dataone.org/odo/ECSO_";
 	public static String taxaPrefix = "http://purl.dataone.org/odo/TAXA_";
+	public static String envoPrefix = "http://purl.obolibrary.org/obo/ENVO_";
+	public static String patoPrefix = "http://purl.obolibrary.org/obo/PATO_";
+	public static String uoPrefix = "http://purl.obolibrary.org/obo/UO_";
 
 	private OntModel ecsoModel = null;
 	private Map<String, String> namespaces = new HashMap<String, String>();
 	private int classId;
+	
+	private Map<String, OntClass> generatedConcepts = new HashMap<String, OntClass>();
 	
 	private OntModel m = null;
 	private Property rdfsLabel = null;
@@ -56,6 +61,10 @@ public class MeasurementTypeGenerator {
 		// prep the namespace prefixes
 		namespaces.put("ecso", ecsoPrefix);
 		namespaces.put("taxa", taxaPrefix);
+		namespaces.put("envo", envoPrefix);
+		namespaces.put("pato", patoPrefix);
+		namespaces.put("uo", uoPrefix);
+
 		namespaces.put("oboe", AnnotationGenerator.oboe);
 		namespaces.put("oboe-core", AnnotationGenerator.oboe_core);
 		namespaces.put("oboe-characteristics", AnnotationGenerator.oboe_characteristics);
@@ -102,16 +111,24 @@ public class MeasurementTypeGenerator {
 			return mt;
 		}
 		
+		OntClass entity = null;
+		OntClass characteristic = null;
+
 		// characteristic
 		String characteristicUri = this.lookupConcept(characteristicLabel);
 		if (characteristicUri == null) {
-			return null;
+			// generate it
+			characteristic = generateCharacteristic(characteristicLabel);
+			characteristicUri = characteristic.getURI();
+			//return null;
 		}
 
 		// entity
 		String entityUri = this.lookupConcept(entityLabel);
 		if (entityUri == null) {
-			return null;
+			entity = generateEntity(entityLabel);
+			entityUri = entity.getURI();
+			//return null;
 		}
 		
 		// start the measurement type
@@ -122,12 +139,16 @@ public class MeasurementTypeGenerator {
 		mt.setSuperClass(measurementTypeClass);
 		
 		// add characteristic
-		OntClass characteristic = this.ecsoModel.getOntClass(characteristicUri);
+		if (characteristic == null) {
+			characteristic = this.getConcept(characteristicUri);
+		}
 		SomeValuesFromRestriction characteristicRestriction = m.createSomeValuesFromRestriction(null, measuresCharacteristic, characteristic);
 		mt.addSuperClass(characteristicRestriction);
 		
 		// add entity
-		OntClass entity = this.ecsoModel.getOntClass(entityUri);
+		if (entity == null) {
+			entity = getConcept(entityUri);
+		}
 		SomeValuesFromRestriction entityRestriction = m.createSomeValuesFromRestriction(null, measuresEntity, entity);
 		mt.addSuperClass(entityRestriction);
 	
@@ -143,11 +164,29 @@ public class MeasurementTypeGenerator {
 
 		String partialUri = String.format("%8s", classId++).replace(' ', '0');  
 		String uri = entityNamespace + partialUri;
+		log.debug("Generating ENTITY: " + uri);
 		OntClass entitySubclass =  m.createClass(uri);
 		entitySubclass.addProperty(rdfsLabel, entityLabel);
 		entitySubclass.setSuperClass(entityClass);
 		
 		return entitySubclass;
+		
+	}
+	
+	public OntClass generateCharacteristic(String characteristicString) {
+		
+		// create the entity subclass
+		String characteristicLabel = this.getFragment(characteristicString);
+		String characteristicNamespace = this.getNamespace(characteristicString);
+
+		String partialUri = String.format("%8s", classId++).replace(' ', '0');  
+		String uri = characteristicNamespace + partialUri;
+		log.debug("Generating CHARACTERISTIC: " + uri);
+		OntClass characteristicSubclass =  m.createClass(uri);
+		characteristicSubclass.addProperty(rdfsLabel, characteristicLabel);
+		characteristicSubclass.setSuperClass(characteristicClass);
+		
+		return characteristicSubclass;
 		
 	}
 	
@@ -178,7 +217,17 @@ public class MeasurementTypeGenerator {
 		this.measurementTypeClass = measurementTypeClass;
 	}
 
-
+	public OntClass getConcept(String uri) {
+		OntClass concept = null;
+		// look in current model
+		concept = this.m.getOntClass(uri);
+		// look in existing model
+		if (concept == null) {
+			concept = this.ecsoModel.getOntClass(uri);
+		}
+		return concept;
+	}
+	
 	public String lookupConcept(String fullLabel) {
 		String concept = null;
 		// look in current model
@@ -234,17 +283,19 @@ public class MeasurementTypeGenerator {
 	}
 
 	public String generateTypes(String pidFile) throws Exception {
+		
 		// fetch the file
 		URL url = new URL(pidFile);
     	InputStream inputStream = url.openStream();
 		BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 		
 		// parse it
-		Iterable<CSVRecord> records = CSVFormat.EXCEL.withHeader().parse(reader);
+		Iterable<CSVRecord> records = CSVFormat.TDF.withHeader().parse(reader);
 		
 		int count = 0;
 		// iterate over the rows
 		for (CSVRecord record : records) {
+			
 			// get the info from the csv file
 		    String entityLabel = record.get("Entity");
 		    String characteristicLabel = record.get("Characteristic");
@@ -263,6 +314,15 @@ public class MeasurementTypeGenerator {
 		    	continue;
 		    }
 		    
+		    // hash for distinct values
+		    String rowValue = entityLabel + characteristicLabel;
+		    log.debug("Processing row: " + rowValue);
+
+		    if (generatedConcepts.containsKey(rowValue)) {
+			    log.debug("Skipping duplicate row");
+		    	continue;
+		    }
+		    
 		    OntClass mt = this.generateMeasurementType(entityLabel, characteristicLabel);
 		    // log for tying it back to the source rows
 		    if (mt != null) {
@@ -272,6 +332,8 @@ public class MeasurementTypeGenerator {
 			    		+ entityLabel + "\t" 
 			    		+ characteristicLabel
 			    		);
+			    // record for future iteration
+			    generatedConcepts.put(rowValue, mt);
 			    count++;
 		    }
 		}
