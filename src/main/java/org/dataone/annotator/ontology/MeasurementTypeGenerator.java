@@ -358,8 +358,15 @@ public class MeasurementTypeGenerator {
 		    OntClass mt = this.generateMeasurementType(entityLabel, characteristicLabel);
 		    // log for tying it back to the source rows
 		    if (mt != null) {
+		    	
+		    	// parse out the class id int that we made
+		    	String uri = mt.getURI();
+		    	String generatedClassIdInt = uri.split("_")[1];
+		    	generatedClassIdInt = generatedClassIdInt.replaceFirst("^0+(?!$)", "");
+		    	
 			    log.debug("Generated MeasurementType: \t" 
-			    		+ mt.getURI() + "\t" 
+			    		+ generatedClassIdInt + "\t" 
+			    		+ uri + "\t" 
 			    		+ mt.getLabel(null) + "\t" 
 			    		+ entityLabel + "\t" 
 			    		+ characteristicLabel
