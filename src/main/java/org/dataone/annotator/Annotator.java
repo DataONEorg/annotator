@@ -1,6 +1,8 @@
 package org.dataone.annotator;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
@@ -27,6 +29,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.annotator.generator.AnnotationUploader;
@@ -132,7 +135,10 @@ public class Annotator {
 		        if (cmd.hasOption("types")) {
 		        	String pidFile = cmd.getOptionValue("pidfile");
 		        	MeasurementTypeGenerator mtg = new MeasurementTypeGenerator();
-		        	mtg.generateTypes(pidFile);
+		        	String rdfString = mtg.generateTypes(pidFile);
+		        	File outputFile = File.createTempFile("generated_types", ".owl");
+					IOUtils.write(rdfString, new FileOutputStream(outputFile));
+					log.debug("Generated Types file: " + outputFile.getAbsolutePath());
 		        	return;
 		        }
 		        
