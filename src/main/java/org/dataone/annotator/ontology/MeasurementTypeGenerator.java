@@ -29,6 +29,7 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 
 public class MeasurementTypeGenerator {
 	
@@ -45,7 +46,7 @@ public class MeasurementTypeGenerator {
 	private Map<String, String> namespaces = new HashMap<String, String>();
 	private int classId;
 	
-	private Map<String, OntClass> generatedConcepts = new HashMap<String, OntClass>();
+	private Map<String, OntClass> allConcepts = new HashMap<String, OntClass>();
 	
 	private OntModel m = null;
 	private Property rdfsLabel = null;
@@ -96,6 +97,13 @@ public class MeasurementTypeGenerator {
 		
 		// where do we begin with our counting?
 		classId = Settings.getConfiguration().getInt("annotator.ontology.classId");
+		
+		// prep ALL concepts for quick look up
+		ExtendedIterator<OntClass> classIter = ecsoModel.listNamedClasses();
+		while (classIter.hasNext()) {
+			OntClass cls = classIter.next();
+			allConcepts.put(cls.getLabel(null), cls);
+		}
 		
 	}
 	
@@ -196,6 +204,9 @@ public class MeasurementTypeGenerator {
 		entitySubclass.addProperty(rdfsLabel, entityLabel);
 		entitySubclass.setSuperClass(entityClass);
 		
+		// save for later
+		allConcepts.put(entitySubclass.getLabel(null), entitySubclass);
+		
 		return entitySubclass;
 		
 	}
@@ -218,6 +229,9 @@ public class MeasurementTypeGenerator {
 		characteristicSubclass.addProperty(rdfsLabel, characteristicLabel);
 		characteristicSubclass.setSuperClass(characteristicClass);
 		
+		// save for later
+		allConcepts.put(characteristicSubclass.getLabel(null), characteristicSubclass);
+				
 		return characteristicSubclass;
 		
 	}
@@ -262,16 +276,23 @@ public class MeasurementTypeGenerator {
 	
 	public String lookupConcept(String fullLabel) {
 		String concept = null;
-		// look in current model
-		concept = this.lookupConcept(fullLabel, this.m);
-		// look in existing model
-		if (concept == null) {
-			concept = this.lookupConcept(fullLabel, this.ecsoModel);
+		// try the map
+		OntClass existingConcept = allConcepts.get(getFragment(fullLabel));
+		if (existingConcept != null) {
+			concept = existingConcept.getURI();
 		}
+		// look in current model
+//		if (concept == null) {
+//			concept = this.lookupConcept(fullLabel, this.m);
+//		}
+//		// look in existing model
+//		if (concept == null) {
+//			concept = this.lookupConcept(fullLabel, this.ecsoModel);
+//		}
 		return concept;
 	}
 	
-	public String lookupConcept(String fullLabel, OntModel model) {
+	private String lookupConcept(String fullLabel, OntModel model) {
 		
 		String concept = null;
 		
@@ -346,11 +367,12 @@ public class MeasurementTypeGenerator {
 		    	continue;
 		    }
 		    
-		    // hash for distinct values
-		    String rowValue = entityLabel + " " + characteristicLabel;
+		    // construct measurement label
+		    
+		    String rowValue = this.getFragment(entityLabel) + " " + this.getFragment(characteristicLabel);
 		    log.debug("Processing row: " + rowValue);
 
-		    if (generatedConcepts.containsKey(rowValue)) {
+		    if (allConcepts.containsKey(rowValue)) {
 			    log.debug("Skipping duplicate row");
 		    	continue;
 		    }
@@ -372,7 +394,7 @@ public class MeasurementTypeGenerator {
 			    		+ characteristicLabel
 			    		);
 			    // record for future iteration
-			    generatedConcepts.put(rowValue, mt);
+			    allConcepts.put(rowValue, mt);
 			    count++;
 		    } else {
 			    log.debug("could not generate MeasurementType for row: " + rowValue); 
