@@ -73,7 +73,9 @@ public class EsorService implements ConceptMatcher {
 		// see: https://github.com/DataONEorg/sem-prov-design/issues/134
 		//query = query.replaceAll("\"", "");
 		//String uriStr = REST_URL + "?query=" + URLEncoder.encode(query, "UTF-8");
-		String uriStr = REST_URL + "?query=" + query;
+		String uriStr = REST_URL;
+		uriStr += "?minScore=2&numResult=10";
+		uriStr +=  "&query=" + query;
 		log.debug("uriStr=" + uriStr);
 
 		HttpGet method = new HttpGet(uriStr);
