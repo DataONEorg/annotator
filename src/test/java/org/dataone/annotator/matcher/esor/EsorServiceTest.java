@@ -68,7 +68,7 @@ public class EsorServiceTest {
 			String text = "carbon flux";
 			EsorService service = new EsorService();
 			List<ConceptItem> results;
-			results = service.getConcepts(text);
+			results = service.getConcepts(text, null, null);
 			String retConcept = results.get(0).getUri().toString();
 			System.out.println("retConcept=" + retConcept);
 			assertEquals("http://purl.dataone.org/odo/ECSO_00000011", retConcept);

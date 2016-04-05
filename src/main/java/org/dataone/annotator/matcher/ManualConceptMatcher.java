@@ -11,7 +11,7 @@ import java.util.Map;
 public class ManualConceptMatcher implements ConceptMatcher {
 
 	@Override
-	public List<ConceptItem> getConcepts(String fullText) throws Exception {
+	public List<ConceptItem> getConcepts(String fullText, String unit, String context) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}

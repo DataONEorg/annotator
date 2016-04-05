@@ -45,7 +45,7 @@ public class BioPortalService implements ConceptMatcher {
     
 
     @Override
-    public List<ConceptItem> getConcepts(String text) throws Exception {
+    public List<ConceptItem> getConcepts(String text, String unit, String context) throws Exception {
     	
     	// limit suggested annotations to MeasurementType subclasses.
     	//OntClass measurementTypeClass = mtg.getMeasurementTypeClass();
@@ -62,7 +62,7 @@ public class BioPortalService implements ConceptMatcher {
 			sb.append(value);
 			sb.append(" ");
 		}
-		return getConcepts(sb.toString());
+		return getConcepts(sb.toString(), null, null);
 	}
     
     /**

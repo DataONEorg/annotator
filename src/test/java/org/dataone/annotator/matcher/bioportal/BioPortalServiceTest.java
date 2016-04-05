@@ -67,7 +67,7 @@ public class BioPortalServiceTest {
 			String text = "carbon flux";
 			BioPortalService service = new BioPortalService();
 			List<ConceptItem> results;
-			results = service.getConcepts(text);
+			results = service.getConcepts(text, null, null);
 			String retConcept = results.get(0).getUri().toString();
 			assertEquals("http://purl.dataone.org/odo/ECSO_00000011", retConcept);
 		} catch (Exception e) {

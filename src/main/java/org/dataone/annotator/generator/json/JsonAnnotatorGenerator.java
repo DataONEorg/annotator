@@ -120,6 +120,9 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
     	DataPackage dataPackage = this.getDataPackage(metadataPid);
     	SystemMetadata sysMeta = D1Client.getCN().getSystemMetadata(null, metadataPid);
     	
+    	// TODO: use abstract content for context
+    	String context = dataPackage.getTitle();
+    	
 		Map<Identifier, String> annotations = new HashMap<Identifier, String>();
 		
 		// loop through the tables and attributes
@@ -184,7 +187,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 
 						
 						// look up concepts for all the attribute text we have
-						List<ConceptItem> concepts = conceptMatcher.getConcepts(attributeText.toString());
+						List<ConceptItem> concepts = conceptMatcher.getConcepts(attributeText.toString(), attributeUnit, context);
 						if (concepts != null && concepts.size() > 0) {
 							
 							// debug
@@ -238,7 +241,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 				
 				// use an orcid if we can find one from their system
 				String creatorText = creators.get(0).getOrganization() + " " + creators.get(0).getSurName() + " " + creators.get(0).getGivenNames();
-				List<ConceptItem> concepts = orcidMatcher.getConcepts(creatorText);
+				List<ConceptItem> concepts = orcidMatcher.getConcepts(creatorText, null, null);
 				if (concepts != null) {
 					JSONObject annotation = createAnnotationTemplate(sysMeta);
 					JSONArray creatorTags = new JSONArray();
@@ -370,7 +373,9 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
         }
         
     	SystemMetadata sysMeta = D1Client.getCN().getSystemMetadata(null, metadataPid);
-    	 
+    	
+    	String context = solrDoc.get("abstract").toString();
+    	
 		Map<Identifier, String> annotations = new HashMap<Identifier, String>();
 		
 		// loop through the attributes
@@ -423,7 +428,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 				annotation.put("ranges", ranges);
 		    			
 				// look up concepts for all the attribute text we have
-				List<ConceptItem> concepts = conceptMatcher.getConcepts(attributeName);
+				List<ConceptItem> concepts = conceptMatcher.getConcepts(attributeName, null, context);
 				if (concepts != null && concepts.size() > 0) {
 					// add the tags
 					JSONArray tags = new JSONArray();
@@ -462,7 +467,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 				String creator = creators.get(0).toString();
 				// use an orcid if we can find one from their system
 				String creatorText = creator;
-				List<ConceptItem> concepts = orcidMatcher.getConcepts(creatorText);
+				List<ConceptItem> concepts = orcidMatcher.getConcepts(creatorText, null, null);
 				if (concepts != null && concepts.size() > 0) {
 					JSONObject annotation = createAnnotationTemplate(sysMeta);
 					JSONArray creatorTags = new JSONArray();

@@ -32,7 +32,7 @@ class OrcidService implements ConceptMatcher {
     private static final String REST_URL = "http://pub.orcid.org/v1.1/search/orcid-bio";
 
     @Override
-    public List<ConceptItem> getConcepts(String text) throws Exception {
+    public List<ConceptItem> getConcepts(String text, String unit, String context) throws Exception {
     	return lookupOrcid(text, null, null, null);
     	
     }

@@ -13,7 +13,7 @@ public class EsorClient {
     public static void main(String[] args) throws Exception{
         EsorService esorS = new EsorService();
 
-        List<ConceptItem> res = esorS.getConcepts("Litterfall");
+        List<ConceptItem> res = esorS.getConcepts("Litterfall", null, null);
         //List<ConceptItem> res = esorS.getConcepts("carbon%20mass");
         //List<ConceptItem> res = esorS.getConcepts("carbon,mass");
 

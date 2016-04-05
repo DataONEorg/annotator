@@ -47,7 +47,7 @@ public abstract class AnnotationGenerator {
 			OntDocumentManager.getInstance().addModel(dcterms, ModelFactory.createOntologyModel().read(dcterms_source));
 			OntDocumentManager.getInstance().addModel(foaf, ModelFactory.createOntologyModel().read(foaf_source));
 			OntDocumentManager.getInstance().addModel(prov, ModelFactory.createOntologyModel().read(prov));
-			OntDocumentManager.getInstance().addModel(cito, ModelFactory.createOntologyModel().read(cito));
+			//OntDocumentManager.getInstance().addModel(cito, ModelFactory.createOntologyModel().read(cito));
 			cacheInitialized = true;
 		}
 	}

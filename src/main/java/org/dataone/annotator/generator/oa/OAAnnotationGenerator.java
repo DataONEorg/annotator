@@ -135,7 +135,7 @@ public class OAAnnotationGenerator extends AnnotationGenerator {
 		if (creators != null && creators.size() > 0) {	
 			// use an orcid if we can find one from their system
 			String creatorText = creators.get(0).getOrganization() + " " + creators.get(0).getSurName() + " " + creators.get(0).getGivenNames();
-			List<ConceptItem> concepts = orcidMatcher.getConcepts(creatorText);
+			List<ConceptItem> concepts = orcidMatcher.getConcepts(creatorText, null, null);
 			if (concepts != null) {
 				String orcidUri = concepts.get(0).getUri().toString();
 				p1 = m.createIndividual(orcidUri, personClass);
@@ -259,7 +259,7 @@ public class OAAnnotationGenerator extends AnnotationGenerator {
 		String unit = attribute.getUnit().toLowerCase();
 		
 		// look up the concept using the matcher
-		List<ConceptItem> concepts = conceptMatcher.getConcepts(unit);
+		List<ConceptItem> concepts = conceptMatcher.getConcepts(unit, null, null);
 		return ResourceFactory.createResource(concepts.get(0).getUri().toString());
 		//return BioPortalService.lookupAnnotationClass(standardClass, unit, OBOE_SBC);
 	}
@@ -271,7 +271,7 @@ public class OAAnnotationGenerator extends AnnotationGenerator {
 		String text = label + " " + definition;
 		
 		// look up the concept using the matcher
-		List<ConceptItem> concepts = conceptMatcher.getConcepts(text);
+		List<ConceptItem> concepts = conceptMatcher.getConcepts(text, null, null);
 		return ResourceFactory.createResource(concepts.get(0).getUri().toString());
 		//return BioPortalService.lookupAnnotationClass(characteristicClass, text, OBOE_SBC);
 		
@@ -283,7 +283,7 @@ public class OAAnnotationGenerator extends AnnotationGenerator {
 		String definition = entity.getDefinition();
 		
 		// look up the concept using the matcher
-		List<ConceptItem> concepts = conceptMatcher.getConcepts(definition);
+		List<ConceptItem> concepts = conceptMatcher.getConcepts(definition, null, null);
 		return ResourceFactory.createResource(concepts.get(0).getUri().toString());
 		//return BioPortalService.lookupAnnotationClass(entityClass, definition, OBOE_SBC);
 		

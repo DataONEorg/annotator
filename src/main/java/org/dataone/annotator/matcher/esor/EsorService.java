@@ -11,9 +11,12 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
 import org.dataone.annotator.matcher.ConceptItem;
 import org.dataone.annotator.matcher.ConceptMatcher;
 import org.dataone.annotator.matcher.QueryItem;
@@ -38,17 +41,17 @@ public class EsorService implements ConceptMatcher {
 
 
 	@Override
-	public List<ConceptItem> getConcepts(String fullText) throws Exception {
+	public List<ConceptItem> getConcepts(String fullText, String unit, String context) throws Exception {
 		//merge two results with different escape condition
 		String query = parseTerm(fullText);
 		String escapedSpaceQuery = escapeToSpace(query);
 		String escapedCommaQuery = escapeToComma(query);
 
 		if(true){
-			return lookupEsor(escapedSpaceQuery);
+			return lookupEsor(escapedSpaceQuery, unit, context);
 		}else{
-			List<ConceptItem> res_escapedSpace = lookupEsor(escapedSpaceQuery);
-			List<ConceptItem> res_escapedComma = lookupEsor(escapedCommaQuery);
+			List<ConceptItem> res_escapedSpace = lookupEsor(escapedSpaceQuery, unit, context);
+			List<ConceptItem> res_escapedComma = lookupEsor(escapedCommaQuery, unit, context);
 			return mergeRes(res_escapedSpace, res_escapedComma);
 		}
 
@@ -63,10 +66,10 @@ public class EsorService implements ConceptMatcher {
 			sb.append(" ");
 		}
 		//return lookupEsor(sb.toString());
-		return getConcepts(sb.toString());
+		return getConcepts(sb.toString(), null, null);
 	}
 
-	private List<ConceptItem> lookupEsor(String query) throws Exception  {
+	private List<ConceptItem> lookupEsor(String query, String unit, String context) throws Exception  {
 
 		HttpClient client = HttpClients.createDefault();
 		// remove quotes for now
@@ -75,11 +78,23 @@ public class EsorService implements ConceptMatcher {
 		//String uriStr = REST_URL + "?query=" + URLEncoder.encode(query, "UTF-8");
 		String uriStr = REST_URL;
 		//uriStr += "?minScore=2&numResult=10";
-		uriStr +=  "?query=" + query;
+		//uriStr +=  "?query=" + query;
 		log.debug("uriStr=" + uriStr);
 
-		HttpGet method = new HttpGet(uriStr);
+		// use post to handle potentially long parameter values
+		HttpPost method = new HttpPost(uriStr);
 		method.setHeader("Accept", "*/*");
+		ArrayList<NameValuePair> postParameters = new ArrayList<NameValuePair>();
+	    postParameters.add(new BasicNameValuePair("query", query));
+	    if (context != null) {
+		    postParameters.add(new BasicNameValuePair("context", context));
+	    }
+	    if (unit != null) {
+		    postParameters.add(new BasicNameValuePair("unit", unit));
+	    }
+	    //postParameters.add(new BasicNameValuePair("minScore", "2"));
+	    //postParameters.add(new BasicNameValuePair("numResult", "10"));
+		
 		HttpResponse response = client.execute(method);
 		int code = response.getStatusLine().getStatusCode();
 		if (2 != code / 100) {
