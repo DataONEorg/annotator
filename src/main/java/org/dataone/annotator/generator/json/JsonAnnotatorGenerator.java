@@ -121,7 +121,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
     	SystemMetadata sysMeta = D1Client.getCN().getSystemMetadata(null, metadataPid);
     	
     	// TODO: use abstract content for context
-    	String context = dataPackage.getTitle();
+    	String context = dataPackage.getAbstract();
     	
 		Map<Identifier, String> annotations = new HashMap<Identifier, String>();
 		
