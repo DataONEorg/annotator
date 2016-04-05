@@ -4,6 +4,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -11,15 +13,13 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
 import org.dataone.annotator.matcher.ConceptItem;
 import org.dataone.annotator.matcher.ConceptMatcher;
-import org.dataone.annotator.matcher.QueryItem;
 import org.dataone.annotator.ontology.MeasurementTypeGenerator;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -84,17 +84,18 @@ public class EsorService implements ConceptMatcher {
 		// use post to handle potentially long parameter values
 		HttpPost method = new HttpPost(uriStr);
 		method.setHeader("Accept", "*/*");
-		ArrayList<NameValuePair> postParameters = new ArrayList<NameValuePair>();
-	    postParameters.add(new BasicNameValuePair("query", query));
+		JSONObject jsonParams = new JSONObject();
+	    jsonParams.put("query", query);
 	    if (context != null) {
-		    postParameters.add(new BasicNameValuePair("context", context));
+		    jsonParams.put("context", context);
 	    }
 	    if (unit != null) {
-		    postParameters.add(new BasicNameValuePair("unit", unit));
+		    jsonParams.put("unit", unit);
 	    }
-	    //postParameters.add(new BasicNameValuePair("minScore", "2"));
-	    //postParameters.add(new BasicNameValuePair("numResult", "10"));
-		
+
+	    StringEntity entity = new StringEntity(jsonParams.toString(), ContentType.APPLICATION_JSON);
+
+		method.setEntity(entity);
 		HttpResponse response = client.execute(method);
 		int code = response.getStatusLine().getStatusCode();
 		if (2 != code / 100) {
@@ -134,6 +135,19 @@ public class EsorService implements ConceptMatcher {
 			}
 
 		}
+		
+		// sort them by score
+		Collections.sort(concepts, new Comparator<ConceptItem>() {
+
+			@Override
+			public int compare(ConceptItem o1, ConceptItem o2) {
+				// compare the weights
+				return Double.compare(o1.getWeight(), o2.getWeight());
+			}
+			
+		});
+		// descending
+		Collections.reverse(concepts);
 
 		return concepts;
 	}
