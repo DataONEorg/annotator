@@ -102,7 +102,12 @@ public class MeasurementTypeGenerator {
 		ExtendedIterator<OntClass> classIter = ecsoModel.listNamedClasses();
 		while (classIter.hasNext()) {
 			OntClass cls = classIter.next();
-			allConcepts.put(cls.getLabel(null), cls);
+			String label = cls.getLabel(null);
+			if (label == null) {
+				label = cls.getLocalName();
+			}
+			log.trace("Initializing class label: " + label);
+			allConcepts.put(label, cls);
 		}
 		
 	}
