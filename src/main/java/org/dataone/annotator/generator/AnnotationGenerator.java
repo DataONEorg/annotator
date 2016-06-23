@@ -16,9 +16,9 @@ public abstract class AnnotationGenerator {
 	public static String rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
 	public static String rdfs = "http://www.w3.org/2000/01/rdf-schema#";
 	public static String owl = "http://www.w3.org/2002/07/owl#";
-	public static String oboe = "http://ecoinformatics.org/oboe/oboe.1.1/oboe.owl#";
-	public static String oboe_core = "http://ecoinformatics.org/oboe/oboe.1.1/oboe-core.owl#";
-	public static String oboe_characteristics = "http://ecoinformatics.org/oboe/oboe.1.1/oboe-characteristics.owl#";
+	public static String oboe = "http://ecoinformatics.org/oboe/oboe.1.2/oboe.owl#";
+	public static String oboe_core = "http://ecoinformatics.org/oboe/oboe.1.2/oboe-core.owl#";
+	public static String oboe_characteristics = "http://ecoinformatics.org/oboe/oboe.1.2/oboe-characteristics.owl#";
 	public static String oboe_sbc = "http://ecoinformatics.org/oboe-ext/sbclter.1.0/oboe-sbclter.owl#";
 	public static String oa = "http://www.w3.org/ns/oa#";
 	public static String oa_source = "http://www.w3.org/ns/oa.rdf";

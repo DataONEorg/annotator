@@ -11,7 +11,7 @@ public class MeasurementTypeGeneratorTest {
 		String fullLabel = "oboe-characteristics:Count";
 		MeasurementTypeGenerator mtg = new MeasurementTypeGenerator();
 		String conceptUri = mtg.lookupConcept(fullLabel);
-		assertEquals("http://ecoinformatics.org/oboe/oboe.1.1/oboe-characteristics.owl#Count", conceptUri);
+		assertEquals("http://ecoinformatics.org/oboe/oboe.1.2/oboe-characteristics.owl#Count", conceptUri);
 		
 	}
 	
