@@ -2,13 +2,17 @@ package org.dataone.annotator.generator.json;
 
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.net.URI;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
@@ -22,6 +26,7 @@ import org.dataone.annotator.matcher.ConceptItem;
 import org.dataone.annotator.matcher.ConceptMatcher;
 import org.dataone.annotator.matcher.ConceptMatcherFactory;
 import org.dataone.annotator.matcher.bioportal.BioPortalService;
+import org.dataone.annotator.matcher.esor.CosineService;
 import org.dataone.annotator.matcher.esor.EsorService;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
@@ -40,7 +45,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 	private static Log log = LogFactory.getLog(JsonAnnotatorGenerator.class);
 	
 	private ConceptMatcher conceptMatcher;
-	
+		
 	private ConceptMatcher orcidMatcher;
 
 
@@ -105,6 +110,9 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
      */
 	@Override
 	 public Map<Identifier, String> generateAnnotations(Identifier metadataPid) throws Exception {
+		if (conceptMatcher instanceof CosineService) {
+			return generateAnnotationsCosine(metadataPid);
+		}
 		return generateAnnotationsFromEML(metadataPid);
 		//return generateAnnotationsFromIndex(metadataPid);
 	}
@@ -283,6 +291,95 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 		
 	}
     
+    /**
+	 * Generates annotations using cosine endpoint
+	 * @param metadataPid
+	 * @return
+	 * @throws Exception
+	 */
+    private Map<Identifier, String> generateAnnotationsCosine(Identifier metadataPid) throws Exception {
+    	
+    	SystemMetadata sysMeta = D1Client.getCN().getSystemMetadata(null, metadataPid);
+    	    	
+		Map<Identifier, String> annotations = new HashMap<Identifier, String>();
+		
+		// get the cosine response
+		String jsonStr = CosineService.lookupCosine(metadataPid.getValue());
+		
+		org.json.JSONObject json = new org.json.JSONObject(jsonStr);
+		org.json.JSONArray graph = json.getJSONArray("@graph");
+
+		int entityCount = 1;
+		int attributeCount = 1;
+		String attributeName = null;
+		ArrayList<ConceptItem> concepts = new ArrayList<ConceptItem>();
+		
+		//process the results
+		for (int i = 0; i < graph.length(); i++) {
+			org.json.JSONObject entry = graph.getJSONObject(i);
+			
+			// the concepts there?
+			if (!entry.has("http://purl.org/dc/terms/subject")) {
+				continue;
+			}
+			
+			// the pointer
+			
+			String pointer = (String) entry.get("@id");
+			pointer = pointer.substring(pointer.indexOf("#"));
+			String indices = pointer.replaceAll("\\D+", "_");
+			indices = indices.substring(1, indices.length()-1);
+			log.debug("indices=" + indices);
+			entityCount = Integer.parseInt(indices.split("_")[0]);
+			attributeCount = Integer.parseInt(indices.split("_")[1]);
+			
+			// the text
+			String label = (String) entry.get("rdfs:label");
+			attributeName = label;
+			
+			// the concept[s] - one annotation per concept
+			org.json.JSONArray subjects = null;
+			Object subjObj = entry.get("http://purl.org/dc/terms/subject");
+			// handle single or multiple
+			if (subjObj instanceof org.json.JSONArray) {
+				subjects = (org.json.JSONArray) subjObj;
+			} else {
+				subjects = new org.json.JSONArray();
+				subjects.put(subjObj);
+			}
+			
+			for (int j = 0; j < subjects.length(); j++) {
+				org.json.JSONObject a = subjects.getJSONObject(j);
+				String url = a.getString("@id");
+				double score = 0;
+				System.out.println("url=" + url);
+
+				ConceptItem c = new ConceptItem(new URI(url), score);
+				concepts.add(c);
+				
+				// construct the annotation with this information
+				JSONObject annotation = 
+						constructAttributeAnnotation(
+								sysMeta, 
+								entityCount, 
+								attributeCount, 
+								attributeName, 
+								concepts);
+					
+				// write the annotation out
+				StringWriter sw = new StringWriter();
+		    	annotation.writeJSONString(sw);
+				Identifier pid = new Identifier();
+				pid.setValue(annotation.get("id").toString());
+				annotations.put(pid, sw.toString());	
+					
+			}
+				
+		}
+		
+		return annotations;
+    }
+    
     public JSONObject constructAttributeAnnotation(
     		SystemMetadata sysMeta, 
     		int entityCount, 
@@ -304,6 +401,9 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 		}
 		if (conceptMatcher instanceof EsorService) {
 			fieldName = "sem_annotation_esor_sm";
+		}
+		if (conceptMatcher instanceof CosineService) {
+			fieldName = "sem_annotation_cosine_sm";
 		}
 		
     	annotation.put("field", fieldName);
