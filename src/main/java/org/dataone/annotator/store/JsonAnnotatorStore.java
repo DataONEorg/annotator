@@ -204,7 +204,13 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 		// read the annotation out as a String object
 		Identifier sid = new Identifier();
 		sid.setValue(id);
-		InputStream object = storageNode.get(session, sid);
+		InputStream object = FileBasedCache.get(id);
+		if (object == null) {
+			object = storageNode.get(session, sid);
+			FileBasedCache.cache(id, object);
+			object = FileBasedCache.get(id);
+		}
+		
 		return IOUtils.toString(object, "UTF-8");
 	}
 
@@ -255,6 +261,7 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 		// update it on the node
 		InputStream object = new ByteArrayInputStream(annotation.toJSONString().getBytes(DEFAULT_ENCODING));
 		storageNode.update(session, originalPid, object, pid, sysmeta);
+		FileBasedCache.remove(id);
 		
 		return annotation.toJSONString();
 		
@@ -270,6 +277,9 @@ public class JsonAnnotatorStore implements AnnotatorStore {
 		sid.setValue(id);
 		
 		storageNode.archive(session, sid);
+		
+		FileBasedCache.remove(id);
+		
 		//TODO: allow deletes by anyone, not just the node admin
 		//storageNode.delete(session, sid);
 
