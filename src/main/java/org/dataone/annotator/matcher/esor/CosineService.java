@@ -19,7 +19,7 @@ public class CosineService implements ConceptMatcher {
 	private static Log log = LogFactory.getLog(CosineService.class);
 
 	//the cosine server
-	private static final String REST_URL = "https://esor.tw.rpi.edu/cosine/";
+	private static final String REST_URL = "https://esor.tw.rpi.edu/cosine/?dataset=";
 
 	
 	public CosineService() {
