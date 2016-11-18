@@ -312,7 +312,6 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 		int entityCount = 1;
 		int attributeCount = 1;
 		String attributeName = null;
-		ArrayList<ConceptItem> concepts = new ArrayList<ConceptItem>();
 		
 		//process the results
 		for (int i = 0; i < graph.length(); i++) {
@@ -355,6 +354,7 @@ public class JsonAnnotatorGenerator extends AnnotationGenerator {
 				System.out.println("url=" + url);
 
 				ConceptItem c = new ConceptItem(new URI(url), score);
+				ArrayList<ConceptItem> concepts = new ArrayList<ConceptItem>();
 				concepts.add(c);
 				
 				// construct the annotation with this information
