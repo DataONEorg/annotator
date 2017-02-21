@@ -38,6 +38,7 @@ public class FileBasedCache {
 		if (cache.containsKey(id)) {
 			File file = cache.get(id);
 			file.delete();
+			cache.remove(id);
 			return true;
 		}
 		return false;
