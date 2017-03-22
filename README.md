@@ -43,14 +43,14 @@ After configuring the annotator.properties as desired, the utility can be called
 There are other flag options as well, described below.
 
 For automated annotations:
--create (as above)
--createAll (does not use pidfile and simply generates annotations for EVERY metadata object in the configured repo)
--remove (removes annotations for pids in the file)
--removeAll (removes all annotations in the repo)
+* `create` (as above)
+* `createAll` (does not use pidfile and simply generates annotations for EVERY metadata object in the configured repo)
+* `remove` (removes annotations for pids in the file)
+* `removeAll` (removes all annotations in the repo)
 
 For other actions:
--manual (generates annotations from manual spreadsheet identified by file argument)
--types (generates ontology concepts provided in the file argument)
+* `manual` (generates annotations from manual spreadsheet identified by file argument)
+* `types` (generates ontology concepts provided in the file argument)
 
 Development logs
 ----------------
