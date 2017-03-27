@@ -38,7 +38,7 @@ For testing, a MockAnnotatorStore can be used and will only print the annotation
 
 After configuring the annotator.properties as desired, the utility can be called:
 
-	mvn exec:java -Dexec.mainClass="org.dataone.annotator.Annotator" -Dexec.args="-create -file <URL to list of pids>"
+	mvn exec:java -Dexec.mainClass="org.dataone.annotator.Annotator" -Dexec.args="-create -pidfile <URL to list of pids>"
 
 There are other flag options as well, described below.
 
